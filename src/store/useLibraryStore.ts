@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { LibraryStats, LateBook } from "../types";
+import { supabase } from "../lib/supabase";
 
 const syncChannel = new BroadcastChannel('library_sync_channel');
 
@@ -283,12 +284,14 @@ export const useLibraryStore = create<LibraryStore>()(
 
     fetchSettings: async () => {
       try {
-        const res = await fetch('/api/settings?t=' + Date.now(), { cache: 'no-store' });
-        if (res.ok) {
-          const data = await res.json();
-          if (Object.keys(data).length > 0) {
-            set({ settings: { ...get().settings, ...data } });
-          }
+        const branch = get().settings.activeBranch;
+        const { data, error } = await supabase
+          .from('library_settings')
+          .select('data')
+          .eq('branch', branch)
+          .single();
+        if (!error && data?.data && Object.keys(data.data).length > 0) {
+          set({ settings: { ...get().settings, ...data.data } });
         }
       } catch (e) {
         console.error('Failed to fetch settings', e);
@@ -301,11 +304,15 @@ export const useLibraryStore = create<LibraryStore>()(
       syncChannel.postMessage({ type: 'SYNC_SETTINGS', payload: newSettings });
 
       try {
-        await fetch('/api/settings', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newSettings),
-        });
+        const { data, error } = await supabase
+          .from('library_settings')
+          .upsert({ branch: newSettings.activeBranch, data: newSettings }, { onConflict: 'branch' })
+          .select();
+        if (error) {
+          console.error('[Supabase saveSettings Error]:', error.message, error.details || error);
+        } else {
+          console.log('[Supabase saveSettings Berhasil Disimpan]:', data);
+        }
       } catch (e) {
         console.error('Failed to save settings', e);
       }
@@ -313,13 +320,15 @@ export const useLibraryStore = create<LibraryStore>()(
 
     fetchStats: async () => {
       try {
-        const res = await fetch('/api/stats');
-        if (res.ok) {
-          const data = await res.json();
-          if (data && Object.keys(data).length > 0) {
-            set({ stats: data });
-            localStorage.setItem("upa_stats", JSON.stringify(data));
-          }
+        const branch = get().settings.activeBranch;
+        const { data, error } = await supabase
+          .from('library_stats')
+          .select('data')
+          .eq('branch', branch)
+          .single();
+        if (!error && data?.data && Object.keys(data.data).length > 0) {
+          set({ stats: data.data });
+          localStorage.setItem("upa_stats", JSON.stringify(data.data));
         }
       } catch (e) {
         console.error('Failed to fetch stats', e);
@@ -330,13 +339,18 @@ export const useLibraryStore = create<LibraryStore>()(
       localStorage.setItem("upa_stats", JSON.stringify(newStats));
       // Broadcast to other tabs instantly
       syncChannel.postMessage({ type: 'SYNC_STATS', payload: newStats });
-      
+
       try {
-        await fetch('/api/stats', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newStats),
-        });
+        const branch = get().settings.activeBranch;
+        const { data, error } = await supabase
+          .from('library_stats')
+          .upsert({ branch, data: newStats }, { onConflict: 'branch' })
+          .select();
+        if (error) {
+          console.error('[Supabase saveStats Error]:', error.message, error.details || error);
+        } else {
+          console.log('[Supabase saveStats Berhasil Disimpan]:', data);
+        }
       } catch (e) {
         console.error('Failed to save stats API', e);
       }

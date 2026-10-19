@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import Home from "@/pages/Home";
 import CollectionPage from "@/pages/CollectionPage";
@@ -8,6 +9,7 @@ import AdminConfig from "@/pages/AdminConfig";
 
 import { PopupNotification } from "@/components/PopupNotification";
 import { EmergencyAlert } from "@/components/EmergencyAlert";
+import { useAdminStore } from "@/store/useAdminStore";
 
 function GlobalOverlays() {
   const location = useLocation();
@@ -24,6 +26,12 @@ function GlobalOverlays() {
 }
 
 export default function App() {
+  const checkSession = useAdminStore((s) => s.checkSession);
+
+  useEffect(() => {
+    checkSession();
+  }, [checkSession]);
+
   return (
     <Router>
       <Routes>

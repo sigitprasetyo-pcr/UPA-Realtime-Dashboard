@@ -1,26 +1,23 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAdminStore } from "../store/useAdminStore";
-import { User, Lock, ArrowLeft, AlertCircle, Eye, EyeOff, LayoutDashboard } from "lucide-react";
+import { Mail, Lock, ArrowLeft, AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 import LogoUnri from "../assets/LogoUnri - Slash.jpg";
 
 export default function Login() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const login = useAdminStore((s) => s.login);
+  const { login, isLoading, error } = useAdminStore();
   const navigate = useNavigate();
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === "admin" && password === "admin123") {
-      login();
+    const success = await login(email, password);
+    if (success) {
       navigate("/admin", { state: { loginSuccess: true } });
-    } else {
-      setError("Username atau password salah");
     }
   };
 
@@ -119,18 +116,18 @@ export default function Login() {
             <form onSubmit={handleLogin} className="space-y-5">
               <div>
                 <label className="block text-gray-700 text-xs font-bold mb-2 ml-1">
-                  Username
+                  Email
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-                    <User className="w-5 h-5" />
+                    <Mail className="w-5 h-5" />
                   </div>
                   <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="bg-gray-50 border border-gray-100 text-gray-900 rounded-xl w-full pl-12 pr-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-unri-green-500 focus:bg-white transition-all font-medium"
-                    placeholder="admin"
+                    placeholder="admin@upa.unri.ac.id"
                     required
                   />
                 </div>
@@ -174,9 +171,14 @@ export default function Login() {
 
               <button
                 type="submit"
-                className="w-full bg-[#fa7855] hover:bg-[#e86744] text-white font-bold py-3.5 px-4 rounded-xl shadow-[0_8px_20px_rgba(250,120,85,0.3)] transform transition-all active:translate-y-1 mt-6 text-[15px] tracking-wide"
+                disabled={isLoading}
+                className="w-full bg-[#fa7855] hover:bg-[#e86744] disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3.5 px-4 rounded-xl shadow-[0_8px_20px_rgba(250,120,85,0.3)] transform transition-all active:translate-y-1 mt-6 text-[15px] tracking-wide flex items-center justify-center gap-2"
               >
-                LOGIN
+                {isLoading ? (
+                  <><Loader2 className="w-5 h-5 animate-spin" /> Memverifikasi...</>
+                ) : (
+                  'LOGIN'
+                )}
               </button>
             </form>
             
