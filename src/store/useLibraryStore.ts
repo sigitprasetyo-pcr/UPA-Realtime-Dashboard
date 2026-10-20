@@ -490,7 +490,7 @@ export const useLibraryStore = create<LibraryStore>()(
 
         s.last_updated = ts.toISOString();
         s.system_status = "online";
-        
+
         // Random Popup Logic
         let newPopup = state.currentPopup;
         if (state.settings.showPopups && !newPopup && Math.random() < 0.15) {
