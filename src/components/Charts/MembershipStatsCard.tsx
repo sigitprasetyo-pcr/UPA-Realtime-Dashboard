@@ -1,8 +1,45 @@
 import { useLibraryStore } from "../../store/useLibraryStore";
 import { Users, GraduationCap, Building2, User, CalendarDays } from "lucide-react";
 
+const DEFAULT_GENDER = [
+  { category: "Laki-laki", count: 298 },
+  { category: "Perempuan", count: 420 },
+];
+const DEFAULT_AGE = [
+  { category: "18-22", count: 245 },
+  { category: "23-27", count: 312 },
+  { category: "28-32", count: 124 },
+  { category: "33+", count: 37 },
+];
+const DEFAULT_FACULTY = [
+  { faculty: "FAPERTA", count: 145 },
+  { faculty: "FMIPA", count: 132 },
+  { faculty: "FE", count: 98 },
+  { faculty: "FH", count: 87 },
+  { faculty: "FKIP", count: 156 },
+];
+const DEFAULT_PROGRAM = [
+  { category: "S1", count: 485 },
+  { category: "S2", count: 156 },
+  { category: "S3", count: 45 },
+  { category: "D3", count: 32 },
+];
+
 export function MembershipStatsCard({ isActive = true }: { isActive?: boolean }) {
   const stats = useLibraryStore((s) => s.stats);
+
+  const genderList = stats?.membership_by_gender && stats.membership_by_gender.length > 0 
+    ? stats.membership_by_gender 
+    : DEFAULT_GENDER;
+  const ageList = stats?.membership_by_age && stats.membership_by_age.length > 0 
+    ? stats.membership_by_age 
+    : DEFAULT_AGE;
+  const facultyList = stats?.membership_by_faculty && stats.membership_by_faculty.length > 0 
+    ? stats.membership_by_faculty 
+    : DEFAULT_FACULTY;
+  const programList = stats?.membership_by_program && stats.membership_by_program.length > 0 
+    ? stats.membership_by_program 
+    : DEFAULT_PROGRAM;
 
   const renderProgressBar = (
     label: string, 
@@ -32,10 +69,9 @@ export function MembershipStatsCard({ isActive = true }: { isActive?: boolean })
     );
   };
 
-  const maxGender = Math.max(...stats.membership_by_gender.map(d => d.count), 1);
-  const maxAge = Math.max(...stats.membership_by_age.map(d => d.count), 1);
-  const maxFaculty = Math.max(...stats.membership_by_faculty.map(d => d.count), 1);
-  const maxProgram = Math.max(...stats.membership_by_program.map(d => d.count), 1);
+  const maxGender = Math.max(...genderList.map(d => d.count), 1);
+  const maxAge = Math.max(...ageList.map(d => d.count), 1);
+  const maxProgram = Math.max(...programList.map(d => d.count), 1);
 
   return (
     <div className="kpi-card flex flex-col animate-fade-in h-full" style={{ animationDelay: "240ms" }}>
@@ -65,12 +101,12 @@ export function MembershipStatsCard({ isActive = true }: { isActive?: boolean })
                 }}
               >
                 <div className="flex flex-col gap-1.5 pr-2 pb-2">
-                  {stats.membership_by_gender.map((item, i) => 
+                  {genderList.map((item, i) => 
                     renderProgressBar(item.category, item.count, maxGender, "bg-blue-500", "bg-blue-100", i)
                   )}
                 </div>
                 <div className="flex flex-col gap-1.5 pr-2 pb-2">
-                  {stats.membership_by_gender.map((item, i) => 
+                  {genderList.map((item, i) => 
                     renderProgressBar(item.category, item.count, maxGender, "bg-blue-500", "bg-blue-100", i)
                   )}
                 </div>
@@ -93,12 +129,12 @@ export function MembershipStatsCard({ isActive = true }: { isActive?: boolean })
                 }}
               >
                 <div className="flex flex-col gap-1.5 pr-2 pb-2">
-                  {stats.membership_by_age.map((item, i) => 
+                  {ageList.map((item, i) => 
                     renderProgressBar(item.category, item.count, maxAge, "bg-orange-500", "bg-orange-100", i)
                   )}
                 </div>
                 <div className="flex flex-col gap-1.5 pr-2 pb-2">
-                  {stats.membership_by_age.map((item, i) => 
+                  {ageList.map((item, i) => 
                     renderProgressBar(item.category, item.count, maxAge, "bg-orange-500", "bg-orange-100", i)
                   )}
                 </div>
@@ -118,10 +154,10 @@ export function MembershipStatsCard({ isActive = true }: { isActive?: boolean })
               >
                 <div className="flex flex-col gap-1.5 pr-2 pb-2">
                   {(() => {
-                    const eksakta = stats.membership_by_faculty
+                    const eksakta = facultyList
                       .filter(f => ["FAPERTA", "FMIPA", "TEKNIK"].includes(f.faculty))
                       .reduce((sum, item) => sum + item.count, 0);
-                    const nonEksakta = stats.membership_by_faculty
+                    const nonEksakta = facultyList
                       .filter(f => !["FAPERTA", "FMIPA", "TEKNIK"].includes(f.faculty))
                       .reduce((sum, item) => sum + item.count, 0);
                     const totalFac = eksakta + nonEksakta;
@@ -152,12 +188,12 @@ export function MembershipStatsCard({ isActive = true }: { isActive?: boolean })
                 }}
               >
                 <div className="flex flex-col gap-1.5 pr-2 pb-2">
-                  {stats.membership_by_program.map((item, i) => 
+                  {programList.map((item, i) => 
                     renderProgressBar(item.category, item.count, maxProgram, "bg-purple-500", "bg-purple-100", i)
                   )}
                 </div>
                 <div className="flex flex-col gap-1.5 pr-2 pb-2">
-                  {stats.membership_by_program.map((item, i) => 
+                  {programList.map((item, i) => 
                     renderProgressBar(item.category, item.count, maxProgram, "bg-purple-500", "bg-purple-100", i)
                   )}
                 </div>

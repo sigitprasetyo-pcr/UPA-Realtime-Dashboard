@@ -211,8 +211,17 @@ const getSavedStats = () => {
     const saved = localStorage.getItem('upa_stats');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (!parsed.admin_transactions || !parsed.membership_by_age || !parsed.membership_by_gender || !parsed.membership_by_program) {
+          localStorage.removeItem('upa_stats');
+          return { ...INITIAL_STATS };
+        }
+        return {
+          ...INITIAL_STATS,
+          ...parsed,
+        };
       } catch (e) {
+        localStorage.removeItem('upa_stats');
         return { ...INITIAL_STATS };
       }
     }
@@ -256,8 +265,16 @@ export const useLibraryStore = create<LibraryStore>()(
     },
 
     removeLateBook: (id) => {
+      // Sinkronisasi hapus/selesaikan denda ke SLiMS Laragon MySQL
+      const slimsApi = import.meta.env.VITE_SLIMS_API_URL || 'http://localhost/upa-api/index.php';
+      fetch(`${slimsApi}?endpoint=resolve-fine`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      }).catch(() => {});
+
       set((state) => {
-        const newLateBooks = state.stats.late_books.filter((b: any) => b.id !== id);
+        const newLateBooks = state.stats.late_books.filter((b: any) => String(b.id) !== String(id));
         const newStats = {
           ...state.stats,
           late_books: newLateBooks,
@@ -269,6 +286,14 @@ export const useLibraryStore = create<LibraryStore>()(
     },
 
     addLateBook: (book) => {
+      // Sinkronisasi tambah denda ke SLiMS Laragon MySQL
+      const slimsApi = import.meta.env.VITE_SLIMS_API_URL || 'http://localhost/upa-api/index.php';
+      fetch(`${slimsApi}?endpoint=add-fine`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(book),
+      }).catch(() => {});
+
       set((state) => {
         const newBook: LateBook = { ...book, id: `manual-${Date.now()}` };
         const newLateBooks = [newBook, ...(state.stats.late_books || [])];
@@ -283,8 +308,24 @@ export const useLibraryStore = create<LibraryStore>()(
     },
 
     fetchSettings: async () => {
+      // 1. Coba ambil dari SLiMS Laragon MySQL
+      const slimsApi = import.meta.env.VITE_SLIMS_API_URL || 'http://localhost/upa-api/index.php';
+      const branch = get().settings.activeBranch;
       try {
-        const branch = get().settings.activeBranch;
+        const res = await fetch(`${slimsApi}?endpoint=settings&branch=${encodeURIComponent(branch)}`, { signal: AbortSignal.timeout(2000) });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.status === 'success' && json.data) {
+            set({ settings: { ...get().settings, ...json.data } });
+            return;
+          }
+        }
+      } catch (err) {
+        // Fallback ke Supabase
+      }
+
+      // 2. Fallback ke Supabase
+      try {
         const { data, error } = await supabase
           .from('library_settings')
           .select('data')
@@ -303,6 +344,17 @@ export const useLibraryStore = create<LibraryStore>()(
       // Broadcast to other tabs instantly
       syncChannel.postMessage({ type: 'SYNC_SETTINGS', payload: newSettings });
 
+      // 1. Simpan ke SLiMS Laragon MySQL
+      const slimsApi = import.meta.env.VITE_SLIMS_API_URL || 'http://localhost/upa-api/index.php';
+      try {
+        fetch(`${slimsApi}?endpoint=settings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newSettings),
+        }).catch(() => {});
+      } catch (e) {}
+
+      // 2. Simpan ke Supabase
       try {
         const { data, error } = await supabase
           .from('library_settings')
@@ -319,6 +371,42 @@ export const useLibraryStore = create<LibraryStore>()(
     },
 
     fetchStats: async () => {
+      // 1. Prioritaskan data real-time langsung dari SLiMS Laragon MySQL
+      const slimsApi = import.meta.env.VITE_SLIMS_API_URL || 'http://localhost/upa-api/index.php';
+      try {
+        const res = await fetch(`${slimsApi}?endpoint=stats`, { signal: AbortSignal.timeout(2500) });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.status === 'success' && json.data) {
+            set((state) => {
+              const merged = {
+                ...INITIAL_STATS,
+                ...state.stats,
+                ...json.data,
+                admin_transactions: (json.data.admin_transactions && json.data.admin_transactions.length > 0)
+                  ? json.data.admin_transactions
+                  : (state.stats.admin_transactions || INITIAL_STATS.admin_transactions),
+                academic_works: (json.data.academic_works && json.data.academic_works.length > 0)
+                  ? json.data.academic_works
+                  : (state.stats.academic_works || INITIAL_STATS.academic_works),
+                membership_by_program: (json.data.membership_by_program && json.data.membership_by_program.length > 0)
+                  ? json.data.membership_by_program
+                  : (state.stats.membership_by_program || INITIAL_STATS.membership_by_program),
+                membership_by_age: (json.data.membership_by_age && json.data.membership_by_age.length > 0)
+                  ? json.data.membership_by_age
+                  : (state.stats.membership_by_age || INITIAL_STATS.membership_by_age),
+              };
+              localStorage.setItem("upa_stats", JSON.stringify(merged));
+              return { stats: merged };
+            });
+            return;
+          }
+        }
+      } catch (err) {
+        // Fallback ke Supabase jika API Laragon offline
+      }
+
+      // 2. Fallback ke Supabase
       try {
         const branch = get().settings.activeBranch;
         const { data, error } = await supabase
@@ -327,8 +415,17 @@ export const useLibraryStore = create<LibraryStore>()(
           .eq('branch', branch)
           .single();
         if (!error && data?.data && Object.keys(data.data).length > 0) {
-          set({ stats: data.data });
-          localStorage.setItem("upa_stats", JSON.stringify(data.data));
+          set((state) => {
+            const merged = {
+              ...INITIAL_STATS,
+              ...state.stats,
+              ...data.data,
+              admin_transactions: data.data.admin_transactions || state.stats.admin_transactions || INITIAL_STATS.admin_transactions,
+              academic_works: data.data.academic_works || state.stats.academic_works || INITIAL_STATS.academic_works,
+            };
+            localStorage.setItem("upa_stats", JSON.stringify(merged));
+            return { stats: merged };
+          });
         }
       } catch (e) {
         console.error('Failed to fetch stats', e);

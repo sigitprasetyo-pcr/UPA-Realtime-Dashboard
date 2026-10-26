@@ -30,7 +30,8 @@ export function CollectionClassChart({ isActive = true }: { isActive?: boolean }
   }, [isActive]);
 
   const labels = CLASS_ORDER.slice().reverse();
-  const values = labels.map((k) => s.collection_by_class[k] ?? 0);
+  const classMap = s?.collection_by_class || {};
+  const values = labels.map((k) => classMap[k] ?? 0);
   const maxVal = Math.max(...values, 1);
 
   const barColors = labels.map((k) => {
@@ -50,89 +51,49 @@ export function CollectionClassChart({ isActive = true }: { isActive?: boolean }
         backgroundColor: barColors,
         borderRadius: 8,
         borderSkipped: false,
-        barPercentage: 0.85,
-        categoryPercentage: 0.9,
+        barPercentage: 0.65,
+        categoryPercentage: 0.8,
       },
     ],
   };
 
-  const baseOpts = buildBarChartOptions(true) as ChartOptions<"bar">;
+  const xMax = Math.ceil((maxVal * 1.25) / 1000) * 1000;
   const opts: ChartOptions<"bar"> = {
-    ...baseOpts,
-    scales: {
-      x: {
-        beginAtZero: true,
-        max: Math.ceil(maxVal * 1.12),
-        ticks: {
-          font: { size: 11, family: "'Plus Jakarta Sans', Poppins, sans-serif", weight: 500 },
-          color: "#4b5563",
-          callback: (tickValue) => formatNumber(Number(tickValue)) as string,
-        },
-        grid: { color: "rgba(202, 138, 4, 0.08)" },
-        border: { color: "#fde68a" },
-      },
-      y: {
-        grid: { display: false },
-        ticks: {
-          font: { size: 12, family: "'Plus Jakarta Sans', Poppins, sans-serif", weight: 700 },
-          color: "#166534",
-        },
-        border: { color: "#fde68a" },
-      },
-    },
+    ...buildBarChartOptions(true),
+    indexAxis: "y",
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: "#78350f",
+        backgroundColor: "#14532d",
         titleFont: { size: 13, family: "'Plus Jakarta Sans', Poppins, sans-serif", weight: 700 },
         bodyFont: { size: 12, family: "'Plus Jakarta Sans', Poppins, sans-serif" },
-        padding: 12,
-        cornerRadius: 10,
+        padding: 10,
+        cornerRadius: 8,
         callbacks: {
-          label: (ctx) => ` ${formatNumber(Number(ctx.parsed.x))} judul`,
+          label: (ctx) => ` ${formatNumber(Number(ctx.raw ?? 0))} judul`,
         },
       },
     },
   };
 
   return (
-    <div className="chart-card h-full animate-fade-in" style={{ animationDelay: "400ms" }}>
-      <div className="chart-card-header">
-        <div className="h-6 w-1.5 rounded-full bg-unri-yellow-500" />
-        <Layers className="h-5 w-5 text-unri-yellow-600" strokeWidth={2.2} />
-        <h2 className="font-bold tracking-wide text-unri-green-800 text-sm md:text-base uppercase">
-          Judul Buku Berdasarkan Kelas
-        </h2>
-        <BarChart3 className="h-4 w-4 ml-auto text-unri-yellow-500" />
+    <div className="kpi-card flex flex-col animate-fade-in overflow-hidden h-full">
+      <div className="kpi-card-header shrink-0">
+        <div className="h-6 w-1.5 rounded-full bg-unri-green-500" />
+        <BarChart3 className="h-5 w-5 text-unri-green-600" strokeWidth={2.2} />
+        <span className="kpi-title text-unri-green-700 tracking-wider">
+          KOLEKSI BERDASARKAN KELAS
+        </span>
+        <div className="flex items-center gap-1 ml-auto text-xs font-semibold text-unri-green-700 bg-unri-green-50 px-2.5 py-1 rounded-full border border-unri-green-200">
+          <Layers className="h-3.5 w-3.5 text-unri-green-600" />
+          <span>DDC 000–900</span>
+        </div>
       </div>
-      <div className="flex-1 min-h-0 relative">
-        <Bar
-          key={chartKey}
-          data={data}
-          options={opts}
-          plugins={[
-            {
-              id: "valueLabels",
-              afterDatasetsDraw: (chart) => {
-                const { ctx, scales } = chart;
-                if (!scales.x || !scales.y) return;
-                ctx.save();
-                ctx.font = "bold 11px 'Plus Jakarta Sans', Poppins, sans-serif";
-                ctx.fillStyle = "#166534";
-                ctx.textBaseline = "middle";
-                const ds = chart.getDatasetMeta(0);
-                ds.data.forEach((el, i) => {
-                  const bar = el as unknown as { x: number; base: number; y: number; width: number };
-                  const val = values[i];
-                  const txt = formatNumber(val);
-                  const xPos = (bar.base ?? 0) + ((bar.x ?? 0) - (bar.base ?? 0)) + 8;
-                  ctx.fillText(txt, xPos, bar.y);
-                });
-                ctx.restore();
-              },
-            },
-          ]}
-        />
+
+      <div className="flex-1 min-h-0 overflow-hidden relative p-1.5 flex flex-col">
+        <div className="flex-1 min-h-0 w-full relative">
+          <Bar key={chartKey} data={data} options={opts} />
+        </div>
       </div>
     </div>
   );

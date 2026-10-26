@@ -16,10 +16,10 @@ export function AcademicWorkChart({ isActive = true }: { isActive?: boolean }) {
   }, [isActive]);
 
   const categories = [
-    { label: "Tugas Akhir/D3", value: s.ta_d3, color: "#16a34a" },
-    { label: "Skripsi", value: s.skripsi_s1, color: "#ca8a04" },
-    { label: "Tesis", value: s.tesis_s2, color: "#0ea5e9" },
-    { label: "Disertasi", value: s.disertasi_s3, color: "#7c3aed" },
+    { label: "Tugas Akhir/D3", value: s?.ta_d3 ?? 11, color: "#16a34a" },
+    { label: "Skripsi", value: s?.skripsi_s1 ?? 29, color: "#ca8a04" },
+    { label: "Tesis", value: s?.tesis_s2 ?? 7, color: "#0ea5e9" },
+    { label: "Disertasi", value: s?.disertasi_s3 ?? 5, color: "#7c3aed" },
   ];
 
   const maxVal = Math.max(...categories.map((c) => c.value), 1);
@@ -45,7 +45,7 @@ export function AcademicWorkChart({ isActive = true }: { isActive?: boolean }) {
     indexAxis: "x",
     responsive: true,
     maintainAspectRatio: false,
-    animation: {
+    animations: {
       y: {
         duration: 800,
         easing: "easeOutQuart",
@@ -56,81 +56,58 @@ export function AcademicWorkChart({ isActive = true }: { isActive?: boolean }) {
           return 0;
         },
       }
-    },
+    } as any,
     plugins: {
       legend: { display: false },
       tooltip: {
         backgroundColor: "#78350f",
         titleFont: { size: 13, family: "'Plus Jakarta Sans', Poppins, sans-serif", weight: 700 },
         bodyFont: { size: 12, family: "'Plus Jakarta Sans', Poppins, sans-serif" },
-        padding: 12,
-        cornerRadius: 10,
+        padding: 10,
+        cornerRadius: 8,
+        callbacks: {
+          label: (ctx) => ` ${formatNumber(Number(ctx.raw ?? 0))} karya`,
+        },
       },
     },
     scales: {
       x: {
         grid: { display: false },
         ticks: {
-          font: { size: 9, family: "'Plus Jakarta Sans', Poppins, sans-serif", weight: 600 },
-          color: "#166534",
-          maxRotation: 0,
-          autoSkip: false,
+          color: "#4b5563",
+          font: { size: 11, family: "'Plus Jakarta Sans', Poppins, sans-serif", weight: 600 },
         },
-        border: { color: "#bbf7d0" },
       },
       y: {
-        beginAtZero: true,
         max: yMax,
+        grid: { color: "rgba(0,0,0,0.04)" },
         ticks: {
-          stepSize: maxVal > 8 ? 4 : 2,
-          precision: 0,
-          font: { size: 10, family: "'Plus Jakarta Sans', Poppins, sans-serif", weight: 500 },
-          color: "#4b5563",
+          stepSize: 5,
+          color: "#9ca3af",
+          font: { size: 11, family: "'Plus Jakarta Sans', Poppins, sans-serif" },
         },
-        grid: { color: "rgba(22, 163, 74, 0.08)" },
-        border: { color: "#bbf7d0" },
       },
     },
   };
 
   return (
-    <div className="chart-card h-full animate-fade-in" style={{ animationDelay: "560ms" }}>
-      <div className="chart-card-header">
-        <div className="h-6 w-1.5 rounded-full bg-unri-yellow-500" />
-        <GraduationCap className="h-5 w-5 text-unri-yellow-600" strokeWidth={2.2} />
-        <h2 className="font-bold tracking-wide text-unri-green-800 text-sm md:text-base uppercase">
-          Penerimaan Karya Ilmiah
-        </h2>
-        <Award className="h-4 w-4 ml-auto text-unri-yellow-500" />
+    <div className="kpi-card flex flex-col animate-fade-in overflow-hidden h-full">
+      <div className="kpi-card-header shrink-0">
+        <div className="h-6 w-1.5 rounded-full bg-amber-500" />
+        <Award className="h-5 w-5 text-amber-600" strokeWidth={2.2} />
+        <span className="kpi-title text-amber-700 tracking-wider">
+          KARYA ILMIAH & TUGAS AKHIR
+        </span>
+        <div className="flex items-center gap-1 ml-auto text-xs font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+          <GraduationCap className="h-3.5 w-3.5 text-amber-600" />
+          <span>Repositori</span>
+        </div>
       </div>
-      <div className="flex-1 min-h-0 relative">
-        <Bar
-          key={chartKey}
-          data={data}
-          options={opts}
-          plugins={[
-            {
-              id: "academicValueLabels",
-              afterDatasetsDraw: (chart) => {
-                const { ctx, scales } = chart;
-                if (!scales.x || !scales.y) return;
-                ctx.save();
-                ctx.font = "bold 13px 'Plus Jakarta Sans', Poppins, sans-serif";
-                ctx.fillStyle = "#78350f";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "bottom";
-                const ds = chart.getDatasetMeta(0);
-                ds.data.forEach((el, i) => {
-                  const bar = el as unknown as { x: number; y: number; base: number };
-                  const val = values[i];
-                  if (val <= 0) return;
-                  ctx.fillText(formatNumber(val), bar.x, bar.y - 4);
-                });
-                ctx.restore();
-              },
-            },
-          ]}
-        />
+
+      <div className="flex-1 min-h-0 overflow-hidden relative p-1.5 flex flex-col">
+        <div className="flex-1 min-h-0 w-full relative">
+          <Bar key={chartKey} data={data} options={opts} />
+        </div>
       </div>
     </div>
   );
