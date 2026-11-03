@@ -16,10 +16,10 @@ export function AcademicWorkChart({ isActive = true }: { isActive?: boolean }) {
   }, [isActive]);
 
   const categories = [
-    { label: "Tugas Akhir/D3", value: s?.ta_d3 ?? 11, color: "#16a34a" },
-    { label: "Skripsi", value: s?.skripsi_s1 ?? 29, color: "#ca8a04" },
-    { label: "Tesis", value: s?.tesis_s2 ?? 7, color: "#0ea5e9" },
-    { label: "Disertasi", value: s?.disertasi_s3 ?? 5, color: "#7c3aed" },
+    { label: "Tugas Akhir/D3", value: s?.ta_d3 || 0, color: "#16a34a" },
+    { label: "Skripsi", value: s?.skripsi_s1 || 0, color: "#ca8a04" },
+    { label: "Tesis", value: s?.tesis_s2 || 0, color: "#0ea5e9" },
+    { label: "Disertasi", value: s?.disertasi_s3 || 0, color: "#7c3aed" },
   ];
 
   const maxVal = Math.max(...categories.map((c) => c.value), 1);

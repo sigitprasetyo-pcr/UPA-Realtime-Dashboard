@@ -1,12 +1,18 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    '[Supabase] Missing env vars. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env'
-  );
-}
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Supabase Mock Client (Nonaktif - Murni SLiMS & XAMPP Local)
+export const supabase = {
+  auth: {
+    signInWithPassword: async () => ({ data: { user: null, session: null }, error: null }),
+    signOut: async () => {},
+    getSession: async () => ({ data: { session: null }, error: null }),
+  },
+  from: () => ({
+    select: () => ({
+      eq: () => ({
+        single: async () => ({ data: null, error: null }),
+      }),
+    }),
+    upsert: () => ({
+      select: async () => ({ data: null, error: null }),
+    }),
+  }),
+};

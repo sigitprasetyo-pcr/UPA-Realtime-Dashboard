@@ -3,7 +3,6 @@ import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 import { RunningTicker } from "../components/RunningTicker";
 import { VisitorsCard } from "../components/KPICards/VisitorsCard";
-import { TransactionsCard } from "../components/KPICards/TransactionsCard";
 import { CollectionCard } from "../components/KPICards/CollectionCard";
 import { TransactionInfoCard } from "../components/KPICards/TransactionInfoCard";
 import { InternalResourcesCard } from "../components/KPICards/InternalResourcesCard";
@@ -58,90 +57,53 @@ export default function Home() {
         >
           {/* ============ SLIDE 1: KATEGORI KOLEKSI & AKTIVITAS ============ */}
           <div className="w-full shrink-0 h-full flex flex-col gap-1.5 px-2 py-1.5 overflow-hidden">
-            {isPusat ? (
-              // Pusat View
-              <>
-                <section className="grid grid-cols-3 gap-1.5 flex-[3] min-h-0">
-                  <div className="min-h-0 overflow-hidden flex flex-col">
-                    <CollectionCard isActive={currentSlide === 0} />
-                  </div>
-                  <div className="col-span-2 min-h-0 overflow-hidden flex flex-col">
-                    <ActivityTrendChart isActive={currentSlide === 0} />
-                  </div>
-                </section>
-                <section className="grid grid-cols-3 gap-1.5 flex-[4] min-h-0">
-                  <div className="col-span-2 min-h-0 overflow-hidden flex flex-col">
-                    <CollectionClassChart isActive={currentSlide === 0} />
-                  </div>
-                  <div className="min-h-0 overflow-hidden flex flex-col">
-                    <PopularCollections />
-                  </div>
-                </section>
-              </>
-            ) : (
-              // Cabang View
-              <>
-                <section className="grid grid-cols-4 gap-1.5 flex-[3] min-h-0">
-                  <div className="min-h-0 overflow-hidden flex flex-col">
-                    <VisitorsCard />
-                  </div>
-                  <div className="min-h-0 overflow-hidden flex flex-col">
-                    <TransactionsCard />
-                  </div>
-                  <div className="min-h-0 overflow-hidden flex flex-col">
-                    <BebasPustakaCard />
-                  </div>
-                  <div className="min-h-0 overflow-hidden flex flex-col">
-                    <CollectionCard isActive={currentSlide === 0} />
-                  </div>
-                </section>
-                <section className="grid grid-cols-1 gap-1.5 flex-[4] min-h-0">
-                  <div className="min-h-0 overflow-hidden flex flex-col">
-                    <ActivityTrendChart isActive={currentSlide === 0} />
-                  </div>
-                </section>
-              </>
-            )}
+            <section className="grid grid-cols-3 gap-1.5 flex-[3] min-h-0">
+              <div className="min-h-0 overflow-hidden flex flex-col">
+                <CollectionCard isActive={currentSlide === 0} />
+              </div>
+              <div className="col-span-2 min-h-0 overflow-hidden flex flex-col">
+                <ActivityTrendChart isActive={currentSlide === 0} />
+              </div>
+            </section>
+            <section className="grid grid-cols-3 gap-1.5 flex-[4] min-h-0">
+              <div className="col-span-2 min-h-0 overflow-hidden flex flex-col">
+                <CollectionClassChart isActive={currentSlide === 0} />
+              </div>
+              <div className="min-h-0 overflow-hidden flex flex-col">
+                <PopularCollections />
+              </div>
+            </section>
           </div>
 
           {/* ============ SLIDE 2: KATEGORI KEANGGOTAAN & TRANSAKSI ============ */}
           <div className="w-full shrink-0 h-full grid grid-cols-3 grid-rows-2 gap-1.5 px-2 py-1.5 overflow-hidden">
-            {isPusat ? (
-              // Pusat View
-              <>
-                <div className="col-start-1 row-start-1 min-h-0 overflow-hidden flex flex-col">
-                  <VisitorsCard />
-                </div>
-                <div className="col-start-1 row-start-2 min-h-0 overflow-hidden flex flex-col">
-                  <TransactionInfoCard />
-                </div>
-                <div className="col-start-2 row-start-1 row-span-2 min-h-0 overflow-hidden flex flex-col">
-                  <MembershipStatsCard isActive={currentSlide === 1} />
-                </div>
-                <div className="col-start-3 row-start-1 min-h-0 overflow-hidden flex flex-col">
+            {/* Column 1: Kunjungan & Info Sirkulasi */}
+            <div className="col-start-1 row-start-1 min-h-0 overflow-hidden flex flex-col">
+              <VisitorsCard />
+            </div>
+            <div className="col-start-1 row-start-2 min-h-0 overflow-hidden flex flex-col">
+              <TransactionInfoCard />
+            </div>
+
+            {/* Column 2: Demografi Keanggotaan */}
+            <div className="col-start-2 row-start-1 row-span-2 min-h-0 overflow-hidden flex flex-col">
+              <MembershipStatsCard isActive={currentSlide === 1} />
+            </div>
+
+            {/* Column 3: Administrasi & Keterlambatan */}
+            <div className="col-start-3 row-start-1 min-h-0 overflow-hidden flex flex-col">
+              {isPusat ? (
+                <AdminTransactionsCard />
+              ) : (
+                <div className="grid grid-cols-2 gap-1.5 h-full min-h-0">
+                  <BebasPustakaCard />
                   <AdminTransactionsCard />
                 </div>
-                <div className="col-start-3 row-start-2 min-h-0 overflow-hidden flex flex-col">
-                  <LateBooksList isActive={currentSlide === 1} />
-                </div>
-              </>
-            ) : (
-              // Cabang View
-              <>
-                <div className="col-start-1 row-start-1 min-h-0 overflow-hidden flex flex-col">
-                  <AdminTransactionsCard />
-                </div>
-                <div className="col-start-1 row-start-2 min-h-0 overflow-hidden flex flex-col">
-                  <TransactionInfoCard />
-                </div>
-                <div className="col-start-2 row-start-1 row-span-2 min-h-0 overflow-hidden flex flex-col">
-                  <MembershipStatsCard isActive={currentSlide === 1} />
-                </div>
-                <div className="col-start-3 row-start-1 row-span-2 min-h-0 overflow-hidden flex flex-col">
-                  <LateBooksList isActive={currentSlide === 1} />
-                </div>
-              </>
-            )}
+              )}
+            </div>
+            <div className="col-start-3 row-start-2 min-h-0 overflow-hidden flex flex-col">
+              <LateBooksList isActive={currentSlide === 1} />
+            </div>
           </div>
 
           {/* ============ SLIDE 3: KATEGORI TUGAS AKHIR ============ */}

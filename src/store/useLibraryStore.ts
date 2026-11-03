@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { LibraryStats, LateBook } from "../types";
-import { supabase } from "../lib/supabase";
 
 const syncChannel = new BroadcastChannel('library_sync_channel');
 
@@ -79,106 +78,69 @@ export type Settings = {
 };
 
 const INITIAL_STATS: any = {
-  total_visitors_today: 416,
-
-  // Transaksi
-  borrowing_today: 140,
-  returning_today: 158,
-  validation_today: 12,
-  bebas_pustaka_today: 8,
-  registration_today: 5,
-  fine_payment_today: 15,
-  administration_today: 115,
-  total_transactions_today: 413,
-
-  // Koleksi
-  total_book_titles: 39815,
-  total_copies: 134668,
-  available_circulation: 133977,
-  availability_percent: 99.5,
-  total_internal_resources: 2456,
-  popular_collections: [
-    { id: "1", title: "Pemrograman Web Modern", author: "Adi Nugroho", borrowCount: 245, class: "Kelas 000" },
-    { id: "2", title: "Database Design", author: "C.J. Date", borrowCount: 198, class: "Kelas 100" },
-    { id: "3", title: "Algoritma & Struktur Data", author: "Sedgewick", borrowCount: 187, class: "Kelas 300" },
-    { id: "4", title: "Clean Code", author: "Robert C. Martin", borrowCount: 156, class: "Kelas 600" },
-    { id: "5", title: "Desain Basis Data", author: "Connolly", borrowCount: 142, class: "Kelas 000" },
-    { id: "6", title: "Jaringan Komputer", author: "Kurose", borrowCount: 130, class: "Kelas 000" },
-    { id: "7", title: "Rekayasa Perangkat Lunak", author: "Pressman", borrowCount: 115, class: "Kelas 600" },
-  ],
-
-  // Total Transaksi
-  total_borrowing_all: 392605,
-  total_returning_all: 391916,
-  total_extension_all: 14502,
-  books_currently_borrowed: 689,
-  members_currently_borrowing: 396,
-  overdue_books: 104,
-  late_books: Array.from({ length: 104 }, (_, i) => generateLateBook(`init-${i}`)),
-
-  // Keanggotaan
-  member_visitors: 396,
+  total_visitors_today: 0,
+  visit_main_door: 0,
+  visit_circulation_room: 0,
+  visit_thesis_room: 0,
+  visit_multimedia_room: 0,
+  visit_reference_room: 0,
+  borrowing_today: 0,
+  returning_today: 0,
+  validation_today: 0,
+  bebas_pustaka_today: 0,
+  registration_today: 0,
+  fine_payment_today: 0,
+  administration_today: 0,
+  total_transactions_today: 0,
+  total_book_titles: 0,
+  total_copies: 0,
+  available_circulation: 0,
+  availability_percent: 0,
+  total_internal_resources: 0,
+  popular_collections: [],
+  total_borrowing_all: 0,
+  total_returning_all: 0,
+  total_extension_all: 0,
+  books_currently_borrowed: 0,
+  members_currently_borrowing: 0,
+  overdue_books: 0,
+  late_books: [],
+  member_visitors: 0,
   reading_card_visitors: 0,
-  general_visitors: 1,
-  membership_by_faculty: [
-    { faculty: "FAPERTA", count: 145 },
-    { faculty: "FMIPA", count: 132 },
-    { faculty: "FE", count: 98 },
-    { faculty: "FH", count: 87 },
-    { faculty: "FKIP", count: 156 },
-  ],
-  membership_by_gender: [
-    { category: "Laki-laki", count: 298 },
-    { category: "Perempuan", count: 420 },
-  ],
-  membership_by_program: [
-    { category: "S1", count: 485 },
-    { category: "S2", count: 156 },
-    { category: "S3", count: 45 },
-    { category: "D3", count: 32 },
-  ],
-  membership_by_age: [
-    { category: "18-22", count: 245 },
-    { category: "23-27", count: 312 },
-    { category: "28-32", count: 124 },
-    { category: "33+", count: 37 },
-  ],
-
-  // Tugas Akhir
-  ta_d3: 2,
-  skripsi_s1: 15,
-  tesis_s2: 3,
-  disertasi_s3: 1,
-  academic_works: [
-    { id: "1", title: "Pengaruh Algoritma Machine Learning pada Prediksi Cuaca", author: "Budi Santoso", nim: "21102001", type: "skripsi_s1", submissionDate: "2024-09-01T08:15:00", faculty: "FMIPA" },
-    { id: "2", title: "Sistem Informasi Manajemen Perpustakaan", author: "Siti Nurhaliza", nim: "21102002", type: "ta_d3", submissionDate: "2024-09-01T09:30:00", faculty: "TEKNIK" },
-    { id: "3", title: "Analisis Sentimen Menggunakan NLP", author: "Ahmad Fauzan", nim: "21102003", type: "tesis_s2", submissionDate: "2024-09-01T10:45:00", faculty: "FMIPA" },
-    { id: "4", title: "Pengembangan Model Deep Learning untuk Diagnosa Medis", author: "Dr. Hendra Wijaya", nim: "21102004", type: "disertasi_s3", submissionDate: "2024-09-01T11:20:00", faculty: "KEDOKTERAN" },
-    { id: "5", title: "Rancang Bangun Jaringan Sensor Nirkabel", author: "Gilang Ramadhan", nim: "21102005", type: "skripsi_s1", submissionDate: "2024-09-01T13:10:00", faculty: "TEKNIK" },
-    { id: "6", title: "Optimasi Query pada Database Terdistribusi", author: "Dewi Lestari", nim: "21102006", type: "skripsi_s1", submissionDate: "2024-09-01T14:05:00", faculty: "FMIPA" },
-  ],
-
-  // Admin Transactions
+  general_visitors: 0,
+  membership_by_faculty: [],
+  membership_by_gender: [],
+  membership_by_program: [],
+  membership_by_age: [],
+  ta_d3: 0,
+  skripsi_s1: 0,
+  tesis_s2: 0,
+  disertasi_s3: 0,
+  academic_works: [],
   admin_transactions: [
-    { type: "peminjaman", count: 140 },
-    { type: "pengembalian", count: 158 },
-    { type: "validasi", count: 12 },
-    { type: "bebas_pustaka", count: 8 },
-    { type: "pendaftaran", count: 5 },
-    { type: "pembayaran_denda", count: 15 },
+    { type: "peminjaman", count: 0 },
+    { type: "pengembalian", count: 0 },
+    { type: "validasi", count: 0 },
+    { type: "bebas_pustaka", count: 0 },
+    { type: "pendaftaran", count: 0 },
+    { type: "pembayaran_denda", count: 0 },
   ],
-
-  // Hourly Data
-  hourly_visitors: [...INITIAL_HOURLY_VISITORS],
-  hourly_borrowing: [...INITIAL_HOURLY_BORROWING],
-  hourly_returning: [...INITIAL_HOURLY_RETURNING],
-  hourly_administration: [...INITIAL_HOURLY_ADMINISTRATION],
-
-  // Koleksi per Kelas
-  collection_by_class: { ...INITIAL_COLLECTION },
-
+  hourly_visitors: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  hourly_borrowing: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  hourly_returning: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  hourly_administration: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+  collection_by_class: {
+    "Kelas 000": 0, "Kelas 100": 0, "Kelas 200": 0, "Kelas 300": 0, "Kelas 400": 0,
+    "Kelas 500": 0, "Kelas 600": 0, "Kelas 700": 0, "Kelas 800": 0, "Kelas 900": 0,
+  },
   last_updated: new Date().toISOString(),
   system_status: "online",
+};
+
+export const BRANCH_DEFAULT_STATS: Record<string, any> = {
+  "Pusat": { ...INITIAL_STATS },
+  "Cabang A": { ...INITIAL_STATS },
+  "Cabang B": { ...INITIAL_STATS },
 };
 
 export type PopupNotification = {
@@ -212,17 +174,21 @@ const getSavedStats = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (!parsed.admin_transactions || !parsed.membership_by_age || !parsed.membership_by_gender || !parsed.membership_by_program) {
+        if (
+          parsed &&
+          (parsed.total_book_titles === 33 ||
+            parsed.total_copies === 190 ||
+            parsed.books_currently_borrowed === 104 ||
+            parsed.total_internal_resources === 2456)
+        ) {
           localStorage.removeItem('upa_stats');
           return { ...INITIAL_STATS };
         }
-        return {
-          ...INITIAL_STATS,
-          ...parsed,
-        };
+        if (parsed && parsed.total_book_titles !== undefined && parsed.admin_transactions) {
+          return parsed;
+        }
       } catch (e) {
         localStorage.removeItem('upa_stats');
-        return { ...INITIAL_STATS };
       }
     }
   }
@@ -251,7 +217,13 @@ export const useLibraryStore = create<LibraryStore>()(
       }) + " WIB",
     currentPopup: null,
 
-    updateSettings: (newSettings) => set((state) => ({ settings: { ...state.settings, ...newSettings } })),
+    updateSettings: (newSettings) => {
+      const oldBranch = get().settings.activeBranch;
+      set((state) => ({ settings: { ...state.settings, ...newSettings } }));
+      if (newSettings.activeBranch && newSettings.activeBranch !== oldBranch) {
+        get().fetchStats();
+      }
+    },
 
     updateStatsManually: (updates) => {
       set((state) => {
@@ -267,10 +239,11 @@ export const useLibraryStore = create<LibraryStore>()(
     removeLateBook: (id) => {
       // Sinkronisasi hapus/selesaikan denda ke SLiMS Laragon MySQL
       const slimsApi = import.meta.env.VITE_SLIMS_API_URL || 'http://localhost/upa-api/index.php';
-      fetch(`${slimsApi}?endpoint=resolve-fine`, {
+      const branch = get().settings.activeBranch || 'Pusat';
+      fetch(`${slimsApi}?endpoint=resolve-fine&branch=${encodeURIComponent(branch)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ id, branch }),
       }).catch(() => {});
 
       set((state) => {
@@ -288,10 +261,11 @@ export const useLibraryStore = create<LibraryStore>()(
     addLateBook: (book) => {
       // Sinkronisasi tambah denda ke SLiMS Laragon MySQL
       const slimsApi = import.meta.env.VITE_SLIMS_API_URL || 'http://localhost/upa-api/index.php';
-      fetch(`${slimsApi}?endpoint=add-fine`, {
+      const branch = get().settings.activeBranch || 'Pusat';
+      fetch(`${slimsApi}?endpoint=add-fine&branch=${encodeURIComponent(branch)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(book),
+        body: JSON.stringify({ ...book, branch }),
       }).catch(() => {});
 
       set((state) => {
@@ -308,11 +282,11 @@ export const useLibraryStore = create<LibraryStore>()(
     },
 
     fetchSettings: async () => {
-      // 1. Coba ambil dari SLiMS Laragon MySQL
+      // Ambil dari SLiMS Server / XAMPP Bridge
       const slimsApi = import.meta.env.VITE_SLIMS_API_URL || 'http://localhost/upa-api/index.php';
-      const branch = get().settings.activeBranch;
+      const branch = get().settings.activeBranch || 'Pusat';
       try {
-        const res = await fetch(`${slimsApi}?endpoint=settings&branch=${encodeURIComponent(branch)}`, { signal: AbortSignal.timeout(2000) });
+        const res = await fetch(`${slimsApi}?endpoint=settings&branch=${encodeURIComponent(branch)}`, { signal: AbortSignal.timeout(6000) });
         if (res.ok) {
           const json = await res.json();
           if (json.status === 'success' && json.data) {
@@ -321,136 +295,75 @@ export const useLibraryStore = create<LibraryStore>()(
           }
         }
       } catch (err) {
-        // Fallback ke Supabase
-      }
-
-      // 2. Fallback ke Supabase
-      try {
-        const { data, error } = await supabase
-          .from('library_settings')
-          .select('data')
-          .eq('branch', branch)
-          .single();
-        if (!error && data?.data && Object.keys(data.data).length > 0) {
-          set({ settings: { ...get().settings, ...data.data } });
-        }
-      } catch (e) {
-        console.error('Failed to fetch settings', e);
+        // Mode offline / API belum jalan
       }
     },
 
     saveSettings: async (newSettings) => {
+      const oldBranch = get().settings.activeBranch;
       set({ settings: newSettings });
       // Broadcast to other tabs instantly
       syncChannel.postMessage({ type: 'SYNC_SETTINGS', payload: newSettings });
 
-      // 1. Simpan ke SLiMS Laragon MySQL
+      // Simpan ke SLiMS XAMPP MySQL Bridge
       const slimsApi = import.meta.env.VITE_SLIMS_API_URL || 'http://localhost/upa-api/index.php';
       try {
-        fetch(`${slimsApi}?endpoint=settings`, {
+        fetch(`${slimsApi}?endpoint=settings&branch=${encodeURIComponent(newSettings.activeBranch)}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newSettings),
         }).catch(() => {});
       } catch (e) {}
 
-      // 2. Simpan ke Supabase
-      try {
-        const { data, error } = await supabase
-          .from('library_settings')
-          .upsert({ branch: newSettings.activeBranch, data: newSettings }, { onConflict: 'branch' })
-          .select();
-        if (error) {
-          console.error('[Supabase saveSettings Error]:', error.message, error.details || error);
-        } else {
-          console.log('[Supabase saveSettings Berhasil Disimpan]:', data);
-        }
-      } catch (e) {
-        console.error('Failed to save settings', e);
+      if (newSettings.activeBranch !== oldBranch) {
+        await get().fetchStats();
       }
     },
 
     fetchStats: async () => {
-      // 1. Prioritaskan data real-time langsung dari SLiMS Laragon MySQL
       const slimsApi = import.meta.env.VITE_SLIMS_API_URL || 'http://localhost/upa-api/index.php';
+      const branch = get().settings.activeBranch || 'Pusat';
       try {
-        const res = await fetch(`${slimsApi}?endpoint=stats`, { signal: AbortSignal.timeout(2500) });
+        const res = await fetch(`${slimsApi}?endpoint=stats&branch=${encodeURIComponent(branch)}`, { signal: AbortSignal.timeout(10000) });
         if (res.ok) {
           const json = await res.json();
           if (json.status === 'success' && json.data) {
-            set((state) => {
-              const merged = {
-                ...INITIAL_STATS,
-                ...state.stats,
-                ...json.data,
-                admin_transactions: (json.data.admin_transactions && json.data.admin_transactions.length > 0)
-                  ? json.data.admin_transactions
-                  : (state.stats.admin_transactions || INITIAL_STATS.admin_transactions),
-                academic_works: (json.data.academic_works && json.data.academic_works.length > 0)
-                  ? json.data.academic_works
-                  : (state.stats.academic_works || INITIAL_STATS.academic_works),
-                membership_by_program: (json.data.membership_by_program && json.data.membership_by_program.length > 0)
-                  ? json.data.membership_by_program
-                  : (state.stats.membership_by_program || INITIAL_STATS.membership_by_program),
-                membership_by_age: (json.data.membership_by_age && json.data.membership_by_age.length > 0)
-                  ? json.data.membership_by_age
-                  : (state.stats.membership_by_age || INITIAL_STATS.membership_by_age),
-              };
-              localStorage.setItem("upa_stats", JSON.stringify(merged));
-              return { stats: merged };
-            });
+            set({ stats: json.data });
+            localStorage.setItem("upa_stats", JSON.stringify(json.data));
             return;
           }
         }
       } catch (err) {
-        // Fallback ke Supabase jika API Laragon offline
+        console.warn("[LibraryStore] SLiMS API stats fetch timeout/offline:", err);
       }
 
-      // 2. Fallback ke Supabase
-      try {
-        const branch = get().settings.activeBranch;
-        const { data, error } = await supabase
-          .from('library_stats')
-          .select('data')
-          .eq('branch', branch)
-          .single();
-        if (!error && data?.data && Object.keys(data.data).length > 0) {
-          set((state) => {
-            const merged = {
-              ...INITIAL_STATS,
-              ...state.stats,
-              ...data.data,
-              admin_transactions: data.data.admin_transactions || state.stats.admin_transactions || INITIAL_STATS.admin_transactions,
-              academic_works: data.data.academic_works || state.stats.academic_works || INITIAL_STATS.academic_works,
-            };
-            localStorage.setItem("upa_stats", JSON.stringify(merged));
-            return { stats: merged };
-          });
-        }
-      } catch (e) {
-        console.error('Failed to fetch stats', e);
+      // Pastikan cache lama yang berisi dummy dibuang
+      const cached = localStorage.getItem("upa_stats");
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (
+            parsed &&
+            (parsed.total_book_titles === 33 ||
+              parsed.total_copies === 190 ||
+              parsed.books_currently_borrowed === 104 ||
+              parsed.total_internal_resources === 2456)
+          ) {
+            localStorage.removeItem("upa_stats");
+            set({ stats: { ...INITIAL_STATS } });
+            return;
+          }
+          set({ stats: parsed });
+          return;
+        } catch (e) {}
       }
+      set({ stats: { ...INITIAL_STATS } });
     },
 
     saveStats: async (newStats) => {
       localStorage.setItem("upa_stats", JSON.stringify(newStats));
       // Broadcast to other tabs instantly
       syncChannel.postMessage({ type: 'SYNC_STATS', payload: newStats });
-
-      try {
-        const branch = get().settings.activeBranch;
-        const { data, error } = await supabase
-          .from('library_stats')
-          .upsert({ branch, data: newStats }, { onConflict: 'branch' })
-          .select();
-        if (error) {
-          console.error('[Supabase saveStats Error]:', error.message, error.details || error);
-        } else {
-          console.log('[Supabase saveStats Berhasil Disimpan]:', data);
-        }
-      } catch (e) {
-        console.error('Failed to save stats API', e);
-      }
     },
 
     clearPopup: () => set({ currentPopup: null }),
@@ -465,168 +378,26 @@ export const useLibraryStore = create<LibraryStore>()(
           timeZone: "Asia/Jakarta",
         }) + " WIB";
 
-      set((state) => {
-        const s = { ...state.stats };
-
-        const currentHour = ts.getHours();
-        let hourIdx = currentHour - 8;
-        if (hourIdx < 0) hourIdx = 0;
-        if (hourIdx > 8) hourIdx = 8;
-
-        if (Math.random() < 0.65) {
-          const randDoor = Math.random();
-          let dMain = 0;
-          let dCirc = 0;
-          let dThesis = 0;
-
-          if (randDoor < 0.3) dMain = 1;
-          else if (randDoor < 0.8) dCirc = Math.floor(Math.random() * 2) + 1;
-          else dThesis = 1;
-
-          s.visit_main_door += dMain;
-          s.visit_circulation_room += dCirc;
-          s.visit_thesis_room += dThesis;
-          s.total_visitors_today =
-            s.visit_main_door + s.visit_circulation_room + s.visit_thesis_room;
-
-          const totalAdd = dMain + dCirc + dThesis;
-          const mRand = Math.random();
-          if (mRand < 0.7) {
-            s.member_visitors += totalAdd;
-          } else if (mRand < 0.9) {
-            s.reading_card_visitors += totalAdd;
-          } else {
-            s.general_visitors += totalAdd;
-          }
-
-          const newHourlyVisitors = [...s.hourly_visitors];
-          newHourlyVisitors[hourIdx] = (newHourlyVisitors[hourIdx] || 0) + totalAdd;
-          s.hourly_visitors = newHourlyVisitors;
-        }
-
-        if (Math.random() < 0.55) {
-          const tRand = Math.random();
-          if (tRand < 0.35) {
-            const add = 1;
-            s.borrowing_today += add;
-            s.total_borrowing_all += add;
-            s.books_currently_borrowed += add;
-            s.available_circulation = Math.max(0, s.available_circulation - add);
-            if (Math.random() < 0.6) s.members_currently_borrowing += 1;
-            if (s.admin_transactions[0]) s.admin_transactions[0].count += add;
-
-            const newHourlyBorrowing = [...s.hourly_borrowing];
-            newHourlyBorrowing[hourIdx] = (newHourlyBorrowing[hourIdx] || 0) + add;
-            s.hourly_borrowing = newHourlyBorrowing;
-          } else if (tRand < 0.70) {
-            const add = 1;
-            s.returning_today += add;
-            s.total_returning_all += add;
-            if (s.books_currently_borrowed > 0) s.books_currently_borrowed -= add;
-            s.available_circulation += add;
-            if (s.admin_transactions[1]) s.admin_transactions[1].count += add;
-
-            const newHourlyReturning = [...s.hourly_returning];
-            newHourlyReturning[hourIdx] = (newHourlyReturning[hourIdx] || 0) + add;
-            s.hourly_returning = newHourlyReturning;
-          } else if (tRand < 0.80) {
-            const add = 1;
-            s.validation_today += add;
-            if (s.admin_transactions[2]) s.admin_transactions[2].count += add;
-          } else if (tRand < 0.85) {
-            const add = 1;
-            s.bebas_pustaka_today += add;
-            if (s.admin_transactions[3]) s.admin_transactions[3].count += add;
-          } else if (tRand < 0.90) {
-            const add = 1;
-            s.registration_today += add;
-            if (s.admin_transactions[4]) s.admin_transactions[4].count += add;
-          } else {
-            const add = 1;
-            s.fine_payment_today += add;
-            if (s.admin_transactions[5]) s.admin_transactions[5].count += add;
-          }
-
-          s.administration_today = s.validation_today + s.bebas_pustaka_today + s.registration_today + s.fine_payment_today;
-          s.total_transactions_today =
-            s.borrowing_today + s.returning_today + s.administration_today;
-          s.availability_percent = Number(
-            ((s.available_circulation / s.total_copies) * 100).toFixed(1),
-          );
-        }
-
-        if (Math.random() < 0.15) {
-          const aRand = Math.random();
-          if (aRand < 0.4) s.skripsi_s1 += 1;
-          else if (aRand < 0.65) s.ta_d3 += 1;
-          else if (aRand < 0.85) s.tesis_s2 += 1;
-          else s.disertasi_s3 += 1;
-        }
-
-        // Simulating collection additions
-        if (Math.random() < 0.2) {
-          const classes = [
-            "Kelas 000", "Kelas 100", "Kelas 200", "Kelas 300", "Kelas 400",
-            "Kelas 500", "Kelas 600", "Kelas 700", "Kelas 800", "Kelas 900",
-          ];
-          const randomClass = classes[Math.floor(Math.random() * classes.length)];
-          const addTitle = Math.random() < 0.7 ? 1 : 2;
-          const addCopies = addTitle * (Math.floor(Math.random() * 3) + 1);
-
-          const newCollection = { ...s.collection_by_class };
-          newCollection[randomClass] = (newCollection[randomClass] || 0) + addTitle;
-          s.collection_by_class = newCollection;
-
-          s.total_book_titles += addTitle;
-          s.total_copies += addCopies;
-          s.available_circulation += addCopies;
-          s.availability_percent = Number(
-            ((s.available_circulation / s.total_copies) * 100).toFixed(1),
-          );
-        }
-
-        s.last_updated = ts.toISOString();
-        s.system_status = "online";
-
-        // Random Popup Logic
-        let newPopup = state.currentPopup;
-        if (state.settings.showPopups && !newPopup && Math.random() < 0.15) {
-          const popupOptions = [
-            { message: "Pengunjung baru masuk ke Ruang Sirkulasi", type: "info" },
-            { message: "1 Buku berhasil dikembalikan", type: "success" },
-            { message: "Pendaftaran anggota baru berhasil", type: "success" },
-            { message: "Buku terlambat dikembalikan (Denda tercatat)", type: "warning" },
-            { message: "Transaksi Bebas Pustaka selesai", type: "info" },
-          ];
-          const chosen = popupOptions[Math.floor(Math.random() * popupOptions.length)];
-          newPopup = { id: Date.now().toString(), message: chosen.message, type: chosen.type as any };
-        }
-
-        get().saveStats(s);
-
-        return {
-          lastUpdateDisplay: timeStr,
-          stats: s,
-          currentPopup: newPopup,
-        };
-      });
+      set({ lastUpdateDisplay: timeStr });
     },
 
     resetToSnapshot: () => {
-      const freshStats = JSON.parse(JSON.stringify(INITIAL_STATS));
-      get().saveStats(freshStats);
-      set({
-        stats: freshStats,
-      });
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('upa_stats');
+      }
+      set({ stats: { ...INITIAL_STATS } });
+      get().fetchStats();
     },
 
     startAutoRefresh: () => {
+      get().refreshTimestamp();
+      get().fetchStats();
+      get().fetchSettings();
       const id = window.setInterval(() => {
         get().refreshTimestamp();
-        get().fetchSettings();
-        // TV screen also periodically syncs just in case storage event misses
         get().fetchStats();
-      }, 2500);
+        get().fetchSettings();
+      }, 8000);
       return () => window.clearInterval(id);
     },
   })

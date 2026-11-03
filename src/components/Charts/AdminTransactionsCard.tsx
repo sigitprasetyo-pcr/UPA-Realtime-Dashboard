@@ -4,12 +4,12 @@ import { formatNumber } from "../../utils/formatters";
 import type { AdminTransaction } from "../../types";
 
 const DEFAULT_ADMIN_TRANSACTIONS: AdminTransaction[] = [
-  { type: "peminjaman", count: 140 },
-  { type: "pengembalian", count: 158 },
-  { type: "validasi", count: 12 },
-  { type: "bebas_pustaka", count: 8 },
-  { type: "pendaftaran", count: 5 },
-  { type: "pembayaran_denda", count: 15 },
+  { type: "peminjaman", count: 0 },
+  { type: "pengembalian", count: 0 },
+  { type: "validasi", count: 0 },
+  { type: "bebas_pustaka", count: 0 },
+  { type: "pendaftaran", count: 0 },
+  { type: "pembayaran_denda", count: 0 },
 ];
 
 export function AdminTransactionsCard() {

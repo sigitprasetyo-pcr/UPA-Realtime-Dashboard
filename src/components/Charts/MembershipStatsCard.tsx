@@ -2,27 +2,27 @@ import { useLibraryStore } from "../../store/useLibraryStore";
 import { Users, GraduationCap, Building2, User, CalendarDays } from "lucide-react";
 
 const DEFAULT_GENDER = [
-  { category: "Laki-laki", count: 298 },
-  { category: "Perempuan", count: 420 },
+  { category: "Laki-laki", count: 0 },
+  { category: "Perempuan", count: 0 },
 ];
 const DEFAULT_AGE = [
-  { category: "18-22", count: 245 },
-  { category: "23-27", count: 312 },
-  { category: "28-32", count: 124 },
-  { category: "33+", count: 37 },
+  { category: "18-22", count: 0 },
+  { category: "23-27", count: 0 },
+  { category: "28-32", count: 0 },
+  { category: "33+", count: 0 },
 ];
 const DEFAULT_FACULTY = [
-  { faculty: "FAPERTA", count: 145 },
-  { faculty: "FMIPA", count: 132 },
-  { faculty: "FE", count: 98 },
-  { faculty: "FH", count: 87 },
-  { faculty: "FKIP", count: 156 },
+  { faculty: "FAPERTA", count: 0 },
+  { faculty: "FMIPA", count: 0 },
+  { faculty: "FE", count: 0 },
+  { faculty: "FH", count: 0 },
+  { faculty: "FKIP", count: 0 },
 ];
 const DEFAULT_PROGRAM = [
-  { category: "S1", count: 485 },
-  { category: "S2", count: 156 },
-  { category: "S3", count: 45 },
-  { category: "D3", count: 32 },
+  { category: "S1", count: 0 },
+  { category: "S2", count: 0 },
+  { category: "S3", count: 0 },
+  { category: "D3", count: 0 },
 ];
 
 export function MembershipStatsCard({ isActive = true }: { isActive?: boolean }) {

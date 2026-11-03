@@ -5,7 +5,7 @@ import { useLibraryStore, Settings } from "../store/useLibraryStore";
 import { 
   CheckCircle, LogOut, X, AlertTriangle, RotateCcw, 
   LayoutDashboard, MonitorPlay, Database, Megaphone,
-  Users, BookUp, BookDown, FileEdit, BellRing
+  Users, BookUp, BookDown, FileEdit, BellRing, Library, BookCopy, BookCheck, BookOpen
 } from "lucide-react";
 
 export default function AdminConfig() {
@@ -17,6 +17,7 @@ export default function AdminConfig() {
   const settings = useLibraryStore((s) => s.settings);
   const stats = useLibraryStore((s) => s.stats);
   const fetchSettings = useLibraryStore((s) => s.fetchSettings);
+  const updateSettings = useLibraryStore((s) => s.updateSettings);
   const saveSettings = useLibraryStore((s) => s.saveSettings);
   const resetToSnapshot = useLibraryStore((s) => s.resetToSnapshot);
   const updateStatsManually = useLibraryStore((s) => s.updateStatsManually);
@@ -97,6 +98,11 @@ export default function AdminConfig() {
     }
   }, [location]);
 
+  const handleBranchChange = (newBranch: Settings["activeBranch"]) => {
+    setActiveBranch(newBranch);
+    updateSettings({ activeBranch: newBranch });
+  };
+
   const handleSaveDisplay = async () => {
     setIsSaving(true);
     await saveSettings({
@@ -109,8 +115,9 @@ export default function AdminConfig() {
       operationalHours,
       emergencyAlert: emergencyAlert.trim() === "" ? null : emergencyAlert,
     });
+    await fetchStats();
     setIsSaving(false);
-    showToast("Berhasil Disimpan", "Pengaturan layar berhasil disinkronkan ke TV!");
+    showToast("Berhasil Disimpan", `Pengaturan layar ${activeBranch} berhasil disinkronkan ke TV!`);
   };
 
   const handleUpdateData = () => {
@@ -294,43 +301,138 @@ export default function AdminConfig() {
 
             {/* TAB: OVERVIEW */}
             {activeTab === "overview" && (
-              <div className="space-y-6 animate-fade-scale">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-5">
-                    <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
-                      <Users className="w-8 h-8" />
+              <div className="space-y-8 animate-fade-scale">
+                {/* Database Connection Status Banner */}
+                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center font-black">
+                      <Database className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-gray-500 mb-1">Total Kunjungan Hari Ini</p>
-                      <p className="text-3xl font-extrabold text-gray-900">{stats.total_visitors_today}</p>
+                      <h4 className="font-extrabold text-emerald-900 text-base">
+                        {settings.activeBranch === "Pusat"
+                          ? "Terhubung ke Database SLiMS 9 Bulian (Pusat)"
+                          : `Sistem Aktif: ${settings.activeBranch === "Cabang A" ? "Kampus Gobah (Cabang A)" : "Kampus Dumai (Cabang B)"}`}
+                      </h4>
+                      <p className="text-xs text-emerald-700 font-medium">
+                        {settings.activeBranch === "Pusat"
+                          ? (stats.connected_to ? `Terkoneksi: ${stats.connected_to}` : "Host: 172.16.9.8:24002 | Database: urlibslims (Server SLiMS UNRI)")
+                          : `Layanan: ${settings.activeBranch} | Sinkronisasi Server Bridge`}
+                      </p>
                     </div>
                   </div>
-                  <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-5">
-                    <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0">
-                      <BookUp className="w-8 h-8" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-gray-500 mb-1">Buku Dipinjam Hari Ini</p>
-                      <p className="text-3xl font-extrabold text-gray-900">{stats.borrowing_today}</p>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 bg-emerald-500 rounded-full animate-ping"></span>
+                    <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-3 py-1.5 rounded-full border border-emerald-300">
+                      Aktif: {settings.activeBranch}
+                    </span>
                   </div>
-                  <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-5">
-                    <div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center shrink-0">
-                      <BookDown className="w-8 h-8" />
+                </div>
+
+                {/* SLiMS Master Catalog & Inventory */}
+                <div>
+                  <h3 className="text-lg font-black text-gray-800 mb-4 flex items-center gap-2">
+                    <Library className="w-5 h-5 text-unri-green-600" />
+                    Statistik Koleksi & Inventaris ({settings.activeBranch})
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                      <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center shrink-0">
+                        <Library className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-gray-500">Total Koleksi (Judul)</p>
+                        <p className="text-2xl font-black text-gray-900">{stats.total_book_titles}</p>
+                        <p className="text-[10px] text-gray-400 font-medium">SLiMS: Total of Collections</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-gray-500 mb-1">Buku Dikembalikan</p>
-                      <p className="text-3xl font-extrabold text-gray-900">{stats.returning_today}</p>
+
+                    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                      <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
+                        <BookCopy className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-gray-500">Total Eksemplar Fisik</p>
+                        <p className="text-2xl font-black text-gray-900">{stats.total_copies}</p>
+                        <p className="text-[10px] text-gray-400 font-medium">SLiMS: Total of Items</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                      <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center shrink-0">
+                        <BookOpen className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-gray-500">Sedang Dipinjam</p>
+                        <p className="text-2xl font-black text-purple-700">{stats.books_currently_borrowed}</p>
+                        <p className="text-[10px] text-gray-400 font-medium">SLiMS: Lent</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                      <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shrink-0">
+                        <BookCheck className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-gray-500">Tersedia di Rak</p>
+                        <p className="text-2xl font-black text-emerald-600">{stats.available_circulation}</p>
+                        <p className="text-[10px] text-gray-400 font-medium">SLiMS: Available</p>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm mt-8 flex flex-col items-center justify-center text-center py-20">
-                  <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                    <LayoutDashboard className="w-10 h-10 text-gray-300" />
+                {/* Aktivitas Sirkulasi & Kunjungan Hari Ini */}
+                <div>
+                  <h3 className="text-lg font-black text-gray-800 mb-4 flex items-center gap-2">
+                    <LayoutDashboard className="w-5 h-5 text-blue-600" />
+                    Aktivitas Transaksi Hari Ini (Buku Tamu & Sirkulasi Real-time)
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                      <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
+                        <Users className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-gray-500">Kunjungan Hari Ini</p>
+                        <p className="text-2xl font-black text-gray-900">{stats.total_visitors_today}</p>
+                        <p className="text-[10px] text-gray-400 font-medium">Dari visitor_count SLiMS</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                      <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shrink-0">
+                        <BookUp className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-gray-500">Dipinjam Hari Ini</p>
+                        <p className="text-2xl font-black text-gray-900">{stats.borrowing_today}</p>
+                        <p className="text-[10px] text-gray-400 font-medium">Dari loan SLiMS hari ini</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                      <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center shrink-0">
+                        <BookDown className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-gray-500">Dikembalikan Hari Ini</p>
+                        <p className="text-2xl font-black text-gray-900">{stats.returning_today}</p>
+                        <p className="text-[10px] text-gray-400 font-medium">Dari loan pengembalian</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 cursor-pointer hover:border-red-200 transition-colors" onClick={() => setActiveTab("circulation")}>
+                      <div className="w-12 h-12 bg-red-50 text-red-600 rounded-xl flex items-center justify-center shrink-0">
+                        <AlertTriangle className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-gray-500">Total Tunggakan Overdue</p>
+                        <p className="text-2xl font-black text-red-600">{stats.overdue_books || stats.late_books?.length || 0}</p>
+                        <p className="text-[10px] text-red-500 font-semibold underline">Lihat 104 data di Sirkulasi &rarr;</p>
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-800">Semua sistem berjalan normal</h3>
-                  <p className="text-gray-500 mt-2 max-w-md">Data disinkronisasi secara otomatis setiap beberapa detik dari sensor simulasi.</p>
                 </div>
               </div>
             )}
@@ -347,7 +449,7 @@ export default function AdminConfig() {
                       <div className="flex gap-4">
                         {(["Pusat", "Cabang A", "Cabang B"] as const).map((branch) => (
                           <label key={branch} className="flex items-center gap-2 cursor-pointer group">
-                            <input type="radio" name="branch" value={branch} checked={activeBranch === branch} onChange={(e) => setActiveBranch(e.target.value as Settings["activeBranch"])} className="w-5 h-5 text-unri-green-600 focus:ring-unri-green-500 cursor-pointer" />
+                            <input type="radio" name="branch" value={branch} checked={activeBranch === branch} onChange={(e) => handleBranchChange(e.target.value as Settings["activeBranch"])} className="w-5 h-5 text-unri-green-600 focus:ring-unri-green-500 cursor-pointer" />
                             <span className="font-semibold text-gray-700">{branch}</span>
                           </label>
                         ))}
