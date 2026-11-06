@@ -62,7 +62,7 @@ export function RunningTicker() {
             <div key={i} className="ticker-item text-white">
               <span className="text-unri-yellow-100 text-xl">●</span>
               <Icon className="h-5 w-5 shrink-0" strokeWidth={2.2} />
-              <span className="font-semibold opacity-90 text-sm tracking-wide">
+              <span className="font-extrabold text-sm tracking-wider">
                 {item.label}
               </span>
               <span

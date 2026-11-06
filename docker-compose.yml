@@ -1,0 +1,142 @@
+version: "3.9"
+
+# ================================================================
+# UPA Realtime Dashboard - Docker Compose
+# ================================================================
+#
+# Service yang dijalankan:
+#   1. frontend  → React + Vite (build) → Nginx         (port 3000)
+#   2. upa-api   → PHP 8.2 + Apache + Ekstensi Redis    (port 8080)
+#   3. db-local  → MySQL 8 lokal (login/users)          (port 3307)
+#   4. redis     → Redis 7 Cache Layer                  (port 6380)
+#
+# Database eksternal UNRI (172.16.9.8) diakses langsung dari
+# container upa-api — pastikan jaringan host mengizinkan akses
+# ke IP tersebut (port 24002 & 23601).
+# ================================================================
+
+services:
+
+  # ─────────────────────────────────────────────
+  # 1. Frontend: React SPA + Nginx
+  # ─────────────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: upa-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - upa-api
+    networks:
+      - upa-network
+    restart: unless-stopped
+    labels:
+      - "com.upa.service=frontend"
+
+  # ─────────────────────────────────────────────
+  # 2. API Backend: PHP 8.2 + Apache + Redis
+  # ─────────────────────────────────────────────
+  upa-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: upa-api
+    ports:
+      - "8080:80"
+    depends_on:
+      redis:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      # ── Redis ───────────────────────────────────
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # ── DB Lokal (SLiMS di XAMPP / MySQL) ───────
+      DB_LOCAL_HOST: ${DB_LOCAL_HOST:-host.docker.internal}
+      DB_LOCAL_PORT: ${DB_LOCAL_PORT:-3306}
+      DB_LOCAL_USER: ${DB_LOCAL_USER:-root}
+      DB_LOCAL_PASS: ${DB_LOCAL_PASS:-}
+      DB_LOCAL_NAME: ${DB_LOCAL_NAME:-Dashboard_UPA}
+    volumes:
+      - ./backend:/var/www/html
+      - api-cache:/var/www/html/cache
+    networks:
+      - upa-network
+    restart: unless-stopped
+    labels:
+      - "com.upa.service=api"
+
+  # ─────────────────────────────────────────────
+  # 3. Database Lokal: MySQL 8 (untuk login/users)
+  # ─────────────────────────────────────────────
+  db-local:
+    image: mysql:8.0
+    container_name: upa-db-local
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_LOCAL_PASS:-upa_secret_2024}
+      MYSQL_DATABASE: dashboard_realtime
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    volumes:
+      - db-local-data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    networks:
+      - upa-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pupa_secret_2024"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    labels:
+      - "com.upa.service=database"
+
+  # ─────────────────────────────────────────────
+  # 4. Redis: In-Memory Cache (port 6380 agar tidak
+  #    bentrok dengan redis-server standalone di 6379)
+  # ─────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: upa-redis
+    ports:
+      - "6380:6379"      # Host:6380 → Container:6379 (hindari bentrok dengan redis-server lama)
+    command: >
+      redis-server
+      --maxmemory 128mb
+      --maxmemory-policy allkeys-lru
+      --save ""
+      --appendonly no
+    networks:
+      - upa-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    labels:
+      - "com.upa.service=cache"
+      - "com.upa.description=Redis Cache Layer"
+
+# ─────────────────────────────────────────────
+# Networks
+# ─────────────────────────────────────────────
+networks:
+  upa-network:
+    driver: bridge
+    name: upa-network
+
+# ─────────────────────────────────────────────
+# Volumes
+# ─────────────────────────────────────────────
+volumes:
+  db-local-data:
+    name: upa-db-local-data
+  api-cache:
+    name: upa-api-cache

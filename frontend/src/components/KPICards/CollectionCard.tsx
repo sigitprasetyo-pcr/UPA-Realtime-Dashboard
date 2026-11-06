@@ -48,7 +48,7 @@ export function CollectionCard({ isActive = true }: { isActive?: boolean }) {
       <div className="kpi-card-header shrink-0">
         <div className="h-6 w-1.5 rounded-full bg-unri-green-600" />
         <Library className="h-5 w-5 text-unri-green-700" strokeWidth={2.2} />
-        <span className="kpi-title text-unri-green-700 tracking-wider">
+        <span className="text-[12px] font-black text-unri-green-700 tracking-widest uppercase">
           STATISTIK KOLEKSI
         </span>
       </div>
@@ -60,12 +60,12 @@ export function CollectionCard({ isActive = true }: { isActive?: boolean }) {
             return (
               <div key={r.label} className="stat-row !py-0.5">
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <Icon className={`h-3.5 w-3.5 ${r.iconClass} shrink-0`} />
-                  <span className="text-xs font-semibold text-gray-700 truncate">{r.label}</span>
+                  <Icon className={`h-4 w-4 ${r.iconClass} shrink-0`} />
+                  <span className="text-xs font-extrabold text-gray-800 truncate">{r.label}</span>
                 </div>
                 <AnimatedNumber
                   value={r.value}
-                  className={`text-lg font-black ${r.valueClass} tabular-nums shrink-0 ml-1`}
+                  className={`text-xl font-black ${r.valueClass} tabular-nums shrink-0 ml-1`}
                   showDelta
                   deltaColorClass="text-unri-green-500"
                 />
@@ -75,10 +75,10 @@ export function CollectionCard({ isActive = true }: { isActive?: boolean }) {
         </div>
 
         {/* Availability bar */}
-        <div className="pt-1 mt-auto shrink-0" style={{ borderTop: "1px dashed rgba(22, 163, 74, 0.15)" }}>
+        <div className="pt-1 mt-auto shrink-0" style={{ borderTop: "1px dashed rgba(22, 163, 74, 0.25)" }}>
           <div className="flex items-center justify-between mb-0.5">
-            <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wide">Ketersediaan</span>
-            <span className="text-sm font-black text-unri-green-700 tabular-nums">
+            <span className="text-[11px] font-extrabold text-gray-700 uppercase tracking-widest">Ketersediaan Koleksi</span>
+            <span className="text-base font-black text-unri-green-700 tabular-nums">
               {typeof stats.availability_percent === "number" ? (
                 <>{Number(stats.availability_percent).toFixed(1)}%</>
               ) : (
@@ -86,7 +86,7 @@ export function CollectionCard({ isActive = true }: { isActive?: boolean }) {
               )}
             </span>
           </div>
-          <div className="w-full h-2.5 rounded-full bg-unri-green-50 overflow-hidden" aria-hidden>
+          <div className="w-full h-3 rounded-full bg-unri-green-50 overflow-hidden" aria-hidden>
             <div
               className="h-full rounded-full"
               style={{

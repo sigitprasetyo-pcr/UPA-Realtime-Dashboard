@@ -81,10 +81,10 @@ export function CollectionClassChart({ isActive = true }: { isActive?: boolean }
       <div className="kpi-card-header shrink-0">
         <div className="h-6 w-1.5 rounded-full bg-unri-green-500" />
         <BarChart3 className="h-5 w-5 text-unri-green-600" strokeWidth={2.2} />
-        <span className="kpi-title text-unri-green-700 tracking-wider">
+        <span className="text-[12px] font-black text-unri-green-700 tracking-widest uppercase">
           KOLEKSI BERDASARKAN KELAS
         </span>
-        <div className="flex items-center gap-1 ml-auto text-xs font-semibold text-unri-green-700 bg-unri-green-50 px-2.5 py-1 rounded-full border border-unri-green-200">
+        <div className="flex items-center gap-1 ml-auto text-xs font-black text-unri-green-700 bg-unri-green-50 px-2.5 py-1 rounded-full border border-unri-green-200">
           <Layers className="h-3.5 w-3.5 text-unri-green-600" />
           <span>DDC 000–900</span>
         </div>

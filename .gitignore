@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+# Docker local env (jangan di-commit ke Git)
+.env.docker.local
+docker/mysql/data/

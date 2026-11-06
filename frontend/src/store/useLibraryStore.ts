@@ -168,29 +168,13 @@ interface LibraryStore {
   addLateBook: (book: Omit<LateBook, 'id'>) => void;
 }
 
+// Selalu mulai dari nol saat app dibuka.
+// Data nyata akan masuk otomatis dari fetchStats() setelah startAutoRefresh() dipanggil.
+// Jika server mati → tetap nol. Jika server hidup → data masuk dari database.
 const getSavedStats = () => {
+  // Bersihkan cache lama agar tidak ada data stale yang tampil saat server offline
   if (typeof window !== 'undefined') {
-    const saved = localStorage.getItem('upa_stats');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (
-          parsed &&
-          (parsed.total_book_titles === 33 ||
-            parsed.total_copies === 190 ||
-            parsed.books_currently_borrowed === 104 ||
-            parsed.total_internal_resources === 2456)
-        ) {
-          localStorage.removeItem('upa_stats');
-          return { ...INITIAL_STATS };
-        }
-        if (parsed && parsed.total_book_titles !== undefined && parsed.admin_transactions) {
-          return parsed;
-        }
-      } catch (e) {
-        localStorage.removeItem('upa_stats');
-      }
-    }
+    localStorage.removeItem('upa_stats');
   }
   return { ...INITIAL_STATS };
 };
@@ -328,36 +312,24 @@ export const useLibraryStore = create<LibraryStore>()(
         if (res.ok) {
           const json = await res.json();
           if (json.status === 'success' && json.data) {
-            set({ stats: json.data });
-            localStorage.setItem("upa_stats", JSON.stringify(json.data));
+            const liveData = { ...json.data, system_status: 'online' };
+            set({ stats: liveData });
+            localStorage.setItem("upa_stats", JSON.stringify(liveData));
             return;
           }
         }
+        // API menjawab tapi bukan success → data bermasalah
+        set({ stats: { ...INITIAL_STATS, system_status: 'offline' } });
+        localStorage.removeItem("upa_stats");
       } catch (err) {
-        console.warn("[LibraryStore] SLiMS API stats fetch timeout/offline:", err);
+        // ======================================================
+        // XAMPP MATI: fetch gagal (timeout / connection refused)
+        // → Kosongkan semua data ke nol & tandai offline
+        // ======================================================
+        console.warn("[LibraryStore] XAMPP offline – data dikosongkan:", err);
+        set({ stats: { ...INITIAL_STATS, system_status: 'offline' } });
+        localStorage.removeItem("upa_stats");
       }
-
-      // Pastikan cache lama yang berisi dummy dibuang
-      const cached = localStorage.getItem("upa_stats");
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          if (
-            parsed &&
-            (parsed.total_book_titles === 33 ||
-              parsed.total_copies === 190 ||
-              parsed.books_currently_borrowed === 104 ||
-              parsed.total_internal_resources === 2456)
-          ) {
-            localStorage.removeItem("upa_stats");
-            set({ stats: { ...INITIAL_STATS } });
-            return;
-          }
-          set({ stats: parsed });
-          return;
-        } catch (e) {}
-      }
-      set({ stats: { ...INITIAL_STATS } });
     },
 
     saveStats: async (newStats) => {
@@ -385,8 +357,8 @@ export const useLibraryStore = create<LibraryStore>()(
       if (typeof window !== 'undefined') {
         localStorage.removeItem('upa_stats');
       }
-      set({ stats: { ...INITIAL_STATS } });
-      get().fetchStats();
+      // Set data ke nol & tandai sistem offline
+      set({ stats: { ...INITIAL_STATS, system_status: 'offline' } });
     },
 
     startAutoRefresh: () => {

@@ -4,6 +4,10 @@ header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 header("Content-Type: application/json; charset=UTF-8");
 
+// ── Redis Cache Layer ─────────────────────────────────────────────────────────
+require_once __DIR__ . '/redis-cache.php';
+// ─────────────────────────────────────────────────────────────────────────────
+
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 if ($method === 'OPTIONS') {
     http_response_code(200);
@@ -11,99 +15,58 @@ if ($method === 'OPTIONS') {
 }
 
 // ==========================================
-// 1. KONFIGURASI DATABASE LOKAL (XAMPP / SLiMS)
+// KONFIGURASI DATABASE LOKAL
 // ==========================================
-$local_host = '127.0.0.1';
-$local_port = 3306;
-$local_db   = 'upa_perpustakaan';
-$local_user = 'root';
-$local_pass = '';
-
-// ==========================================
-// 2. KONFIGURASI DATABASE SERVER UTAMA SLIMS (DATABASE 1)
-// ==========================================
-$server_host = '172.16.9.8';
-$server_port = 24002;
-$server_db   = 'urlibslims';
-$server_user = 'urlibslims_user';
-$server_pass = 'urlibslims_user123';
-
-// ==========================================
-// 3. KONFIGURASI DATABASE REPOSITORI SKRIPSI UNRI (DATABASE 2)
-// ==========================================
-$skripsi_host = '172.16.9.8';
-$skripsi_port = 23601;
-$skripsi_db   = 'manajemen_skripsi';
-$skripsi_user = 'digilibclient';
-$skripsi_pass = 'digilibclient123';
+$local_host = getenv('DB_LOCAL_HOST') ?: '127.0.0.1';
+$local_port = (int)(getenv('DB_LOCAL_PORT') ?: 3306);
+$local_db   = getenv('DB_LOCAL_NAME') ?: 'Dashboard_UPA';
+$local_user = getenv('DB_LOCAL_USER') ?: 'root';
+$local_pass = getenv('DB_LOCAL_PASS') ?: '';
 
 $charset = 'utf8mb4';
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     PDO::ATTR_EMULATE_PREPARES   => false,
-    PDO::ATTR_TIMEOUT            => 10,
+    PDO::ATTR_TIMEOUT            => 8,
 ];
 
-// Mode Koneksi: 
-// 'server' = Terhubung langsung ke database server 172.16.9.8:24002 (urlibslims)
-// 'auto'   = Coba server dulu, fallback ke lokal jika server offline
-// 'local'  = Hanya database lokal
-$mode = 'server';
-
+// ==========================================
+// KONEKSI DATABASE UTAMA (Pakai Database Lokal)
+// ==========================================
 $pdo = null;
 $connected_db = '';
-
-if ($mode === 'server' || $mode === 'auto') {
-    try {
-        $dsn = "mysql:host=$server_host;port=$server_port;dbname=$server_db;charset=$charset";
-        $pdo = new PDO($dsn, $server_user, $server_pass, $options);
-        $connected_db = "server ($server_host:$server_port / $server_db)";
-    } catch (\PDOException $e) {
-        if ($mode === 'server') {
-            http_response_code(500);
-            echo json_encode(["status" => "error", "message" => "Koneksi ke Server SLiMS gagal: " . $e->getMessage()]);
-            exit();
-        }
-    }
-}
-
-// Koneksi ke Database Kedua: manajemen_skripsi (Strict Read-Only)
-$pdo_skripsi = null;
-$connected_skripsi = '';
 try {
-    $dsn_skripsi = "mysql:host=$skripsi_host;port=$skripsi_port;dbname=$skripsi_db;charset=$charset";
-    $pdo_skripsi = new PDO($dsn_skripsi, $skripsi_user, $skripsi_pass, [
-        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_TIMEOUT            => 6,
-    ]);
-    $connected_skripsi = "server ($skripsi_host:$skripsi_port / $skripsi_db)";
-} catch (\Exception $e) {
-    $pdo_skripsi = null;
-    $connected_skripsi = "offline: " . $e->getMessage();
-}
-
-if (!$pdo) {
+    $dsn = "mysql:host=$local_host;port=$local_port;dbname=$local_db;charset=$charset";
+    $pdo = new PDO($dsn, $local_user, $local_pass, $options);
+    $connected_db = "local ($local_host:$local_port / $local_db)";
+} catch (\PDOException $e) {
+    // Coba fallback nama database tanpa spasi (dashboard_realtime di Docker)
     try {
-        $dsn = "mysql:host=$local_host;port=$local_port;dbname=$local_db;charset=$charset";
-        $pdo = new PDO($dsn, $local_user, $local_pass, $options);
-        $connected_db = "local ($local_host:$local_port / $local_db)";
-    } catch (\PDOException $e) {
-        http_response_code(500);
-        echo json_encode(["status" => "error", "message" => "Koneksi Database gagal (Server & Lokal): " . $e->getMessage()]);
+        $altDb = 'dashboard_realtime';
+        $dsnAlt = "mysql:host=$local_host;port=$local_port;dbname=$altDb;charset=$charset";
+        $pdo = new PDO($dsnAlt, $local_user, $local_pass, $options);
+        $connected_db = "local ($local_host:$local_port / $altDb)";
+    } catch (\PDOException $e2) {
+        http_response_code(503);
+        echo json_encode([
+            "status"  => "error",
+            "db"      => "offline",
+            "message" => "Database server lokal tidak aktif atau tidak dapat dijangkau: " . $e->getMessage(),
+        ]);
         exit();
     }
 }
 
-$pdo->exec("SET SESSION sql_mode = (SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))");
+$pdo_skripsi = null;
+$connected_skripsi = "offline";
 
-// Helper untuk koneksi & inisialisasi tabel users di database XAMPP lokal
+// Helper untuk koneksi & inisialisasi tabel users di database lokal (Docker/XAMPP)
 function getLocalXamppPDO() {
-    $host = '127.0.0.1';
-    $port = 3306;
-    $user = 'root';
-    $pass = '';
+    $host = getenv('DB_LOCAL_HOST') ?: '127.0.0.1';
+    $port = (int)(getenv('DB_LOCAL_PORT') ?: 3306);
+    $user = getenv('DB_LOCAL_USER') ?: 'root';
+    $pass = getenv('DB_LOCAL_PASS') ?: '';
 
     try {
         $p = new PDO("mysql:host=$host;port=$port;charset=utf8mb4", $user, $pass, [
@@ -116,15 +79,17 @@ function getLocalXamppPDO() {
         $dbs = $p->query("SHOW DATABASES")->fetchAll(PDO::FETCH_COLUMN);
 
         $targetDb = null;
-        if (in_array('dashoard real time', $dbs)) {
+        if (in_array('Dashboard_UPA', $dbs)) {
+            $targetDb = '`Dashboard_UPA`';
+        } elseif (in_array('dashoard real time', $dbs)) {
             $targetDb = '`dashoard real time`';
         } elseif (in_array('dashboard_realtime', $dbs)) {
             $targetDb = '`dashboard_realtime`';
         } elseif (in_array('upa_perpustakaan', $dbs)) {
             $targetDb = '`upa_perpustakaan`';
         } else {
-            $p->exec("CREATE DATABASE IF NOT EXISTS `dashoard real time` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-            $targetDb = '`dashoard real time`';
+            $p->exec("CREATE DATABASE IF NOT EXISTS `Dashboard_UPA` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+            $targetDb = '`Dashboard_UPA`';
         }
 
         $p->exec("USE $targetDb");
@@ -160,6 +125,49 @@ function getLocalXamppPDO() {
 $action = $_GET['endpoint'] ?? $_GET['action'] ?? 'stats';
 
 switch ($action) {
+    // ==========================================
+    // REDIS-STATUS – Cek koneksi Redis
+    // GET ?endpoint=redis-status
+    // ==========================================
+    case 'redis-status':
+        echo json_encode([
+            "status" => "success",
+            "redis"  => redisStatus(),
+        ]);
+        break;
+
+    // ==========================================
+    // CACHE-CLEAR – Hapus semua cache Redis
+    // GET ?endpoint=cache-clear
+    // ==========================================
+    case 'cache-clear':
+        cacheClear();
+        echo json_encode(["status" => "success", "message" => "Cache Redis berhasil dibersihkan."]);
+        break;
+
+    // ==========================================
+    // PING – Cek apakah XAMPP & MySQL hidup
+    // GET ?endpoint=ping
+    // ==========================================
+    case 'ping':
+        $dbOk = false;
+        $dbMsg = '';
+        try {
+            $pdo->query("SELECT 1");
+            $dbOk = true;
+            $dbMsg = "connected to $connected_db";
+        } catch (\Exception $e) {
+            $dbMsg = $e->getMessage();
+        }
+        echo json_encode([
+            "status"       => $dbOk ? "online" : "db_error",
+            "db"           => $dbOk ? "connected" : "error",
+            "connected_to" => $connected_db,
+            "message"      => $dbMsg,
+            "timestamp"    => date('c'),
+        ]);
+        break;
+
     case 'test':
     case 'check':
         $resSlims = [];
@@ -507,21 +515,21 @@ switch ($action) {
             break;
         }
 
-        // Cache Layer: 15 detik agar dashboard real-time super cepat (<10ms) dan tidak membebani server UNRI
-        $cacheDir = __DIR__ . '/cache';
-        if (!is_dir($cacheDir)) {
-            @mkdir($cacheDir, 0777, true);
-        }
-        $cacheFile = $cacheDir . '/stats_cache_' . md5($branch) . '.json';
+        // ── Redis Cache Layer (menggantikan file cache lama) ───────────────────
+        // Urutan: Redis (RAM, <1ms) → File Fallback (<5ms) → Query DB (hanya jika cache kosong)
         $forceRefresh = isset($_GET['nocache']);
+        $cacheKey     = 'stats_' . strtolower(str_replace(' ', '_', $branch));
 
-        if (!$forceRefresh && file_exists($cacheFile) && (time() - filemtime($cacheFile) < 15)) {
-            $cachedOutput = @file_get_contents($cacheFile);
-            if ($cachedOutput) {
-                echo $cachedOutput;
+        if (!$forceRefresh) {
+            $cached = dashboardCacheGet($cacheKey);
+            if ($cached !== null) {
+                // ✅ Served dari cache — database TIDAK disentuh sama sekali
+                echo json_encode(["status" => "success", "data" => $cached, "cache" => "hit"]);
                 break;
             }
         }
+        // Cache miss → lanjut query database, lalu simpan ke Redis di akhir
+        // ────────────────────────────────────────────────────────────────────
 
         // =========================================================================
         // QUERY MURNI 100% DARI DATABASE SLIMS (SERVER 172.16.9.8:24002 / urlibslims)
@@ -1027,9 +1035,9 @@ switch ($action) {
             "system_status" => "online"
         ];
 
-        $jsonOutput = json_encode(["status" => "success", "data" => $response]);
-        @file_put_contents($cacheFile, $jsonOutput);
-        echo $jsonOutput;
+        // ── Simpan ke Redis (15 detik TTL) & kirim respons ───────────────────
+        cacheSet($cacheKey, $response, 15);
+        echo json_encode(["status" => "success", "data" => $response, "cache" => "miss"]);
         break;
 
     case 'late-books':

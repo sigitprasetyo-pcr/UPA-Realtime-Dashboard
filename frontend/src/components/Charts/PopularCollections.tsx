@@ -15,7 +15,7 @@ export function PopularCollections() {
       <div className="kpi-card-header shrink-0">
         <div className="h-6 w-1.5 rounded-full bg-amber-500" />
         <TrendingUp className="h-5 w-5 text-amber-600" strokeWidth={2.2} />
-        <span className="kpi-title text-amber-700 tracking-wider">
+        <span className="text-[12px] font-black text-amber-700 tracking-widest uppercase">
           KOLEKSI POPULER
         </span>
       </div>

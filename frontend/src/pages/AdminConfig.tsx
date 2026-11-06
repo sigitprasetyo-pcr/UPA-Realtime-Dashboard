@@ -37,6 +37,7 @@ export default function AdminConfig() {
   const [operationalHours, setOperationalHours] = useState(settings.operationalHours || "");
   const [emergencyAlert, setEmergencyAlert] = useState(settings.emergencyAlert || "");
   const [isSaving, setIsSaving] = useState(false);
+  const [hasLoadedSettings, setHasLoadedSettings] = useState(false);
 
   // Data Override States
   const [manualVisitors, setManualVisitors] = useState(stats.total_visitors_today);
@@ -74,16 +75,23 @@ export default function AdminConfig() {
     return () => clearInterval(interval);
   }, [fetchSettings, fetchStats]);
 
+  // Sync form dari settings store HANYA SATU KALI saat settings pertama kali dimuat
+  // (bukan setiap settings berubah, agar input user tidak ter-reset saat menyimpan)
   useEffect(() => {
-    setActiveBranch(settings.activeBranch);
-    setSlideDuration(settings.slideDuration / 1000);
-    setShowPopups(settings.showPopups);
-    setLogoPreview(settings.logoUrl);
-    setRunningText(settings.runningText || "");
-    setMarqueeSpeed(settings.marqueeSpeed || 25);
-    setOperationalHours(settings.operationalHours || "");
-    setEmergencyAlert(settings.emergencyAlert || "");
-  }, [settings]);
+    if (!hasLoadedSettings && (
+      settings.runningText || settings.operationalHours || settings.slideDuration
+    )) {
+      setActiveBranch(settings.activeBranch);
+      setSlideDuration(settings.slideDuration / 1000);
+      setShowPopups(settings.showPopups);
+      setLogoPreview(settings.logoUrl);
+      setRunningText(settings.runningText || "");
+      setMarqueeSpeed(settings.marqueeSpeed || 25);
+      setOperationalHours(settings.operationalHours || "");
+      setEmergencyAlert(settings.emergencyAlert || "");
+      setHasLoadedSettings(true);
+    }
+  }, [settings, hasLoadedSettings]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -105,7 +113,7 @@ export default function AdminConfig() {
 
   const handleSaveDisplay = async () => {
     setIsSaving(true);
-    await saveSettings({
+    const newSettings: Settings = {
       activeBranch,
       slideDuration: slideDuration * 1000,
       showPopups,
@@ -114,7 +122,10 @@ export default function AdminConfig() {
       marqueeSpeed: Number(marqueeSpeed),
       operationalHours,
       emergencyAlert: emergencyAlert.trim() === "" ? null : emergencyAlert,
-    });
+    };
+    await saveSettings(newSettings);
+    // Setelah simpan, izinkan sync ulang form jika settings dari server berbeda
+    setHasLoadedSettings(false);
     await fetchStats();
     setIsSaving(false);
     showToast("Berhasil Disimpan", `Pengaturan layar ${activeBranch} berhasil disinkronkan ke TV!`);

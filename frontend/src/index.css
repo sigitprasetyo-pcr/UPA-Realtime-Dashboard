@@ -33,12 +33,12 @@ body,
   }
 
   .kpi-card-header {
-    @apply px-2.5 py-2 border-b border-unri-green-50 flex items-center gap-2 shrink-0;
+    @apply px-3 py-2.5 border-b border-unri-green-50 flex items-center gap-2 shrink-0;
     background: linear-gradient(135deg, rgba(220, 252, 231, 0.5) 0%, rgba(254, 249, 195, 0.3) 100%);
   }
 
   .kpi-title {
-    @apply text-[11px] font-bold tracking-wide uppercase;
+    @apply text-[12px] font-black tracking-widest uppercase;
   }
 
   .stat-row {
