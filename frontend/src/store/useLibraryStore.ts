@@ -272,6 +272,10 @@ export const useLibraryStore = create<LibraryStore>()(
       try {
         const res = await fetch(`${slimsApi}?endpoint=settings&branch=${encodeURIComponent(branch)}`, { signal: AbortSignal.timeout(6000) });
         if (res.ok) {
+          const contentType = res.headers.get("content-type") || "";
+          if (!contentType.includes("application/json")) {
+            throw new Error(`API mengembalikan HTML, bukan JSON. Pastikan backend Docker (port 8080) sudah berjalan.`);
+          }
           const json = await res.json();
           if (json.status === 'success' && json.data) {
             set({ settings: { ...get().settings, ...json.data } });
@@ -310,6 +314,10 @@ export const useLibraryStore = create<LibraryStore>()(
       try {
         const res = await fetch(`${slimsApi}?endpoint=stats&branch=${encodeURIComponent(branch)}`, { signal: AbortSignal.timeout(10000) });
         if (res.ok) {
+          const contentType = res.headers.get("content-type") || "";
+          if (!contentType.includes("application/json")) {
+            throw new Error(`API mengembalikan HTML, bukan JSON. Pastikan backend Docker (port 8080) sudah berjalan.`);
+          }
           const json = await res.json();
           if (json.status === 'success' && json.data) {
             const liveData = { ...json.data, system_status: 'online' };

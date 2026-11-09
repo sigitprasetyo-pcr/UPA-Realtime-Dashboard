@@ -76,7 +76,7 @@ services:
     image: mysql:8.0
     container_name: upa-db-local
     ports:
-      - "3307:3306"
+      - "3309:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_LOCAL_PASS:-upa_secret_2024}
       MYSQL_DATABASE: dashboard_realtime
