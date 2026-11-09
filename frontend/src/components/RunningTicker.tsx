@@ -50,7 +50,7 @@ export function RunningTicker() {
 
   return (
     <div
-      className="w-full overflow-hidden py-2.5 relative"
+      className="w-full overflow-hidden py-1.5 sm:py-2.5 relative shrink-0"
       style={{
         background: "linear-gradient(90deg, #15803d 0%, #16a34a 30%, #ca8a04 70%, #a16207 100%)",
       }}

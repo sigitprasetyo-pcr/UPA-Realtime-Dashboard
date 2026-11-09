@@ -7,7 +7,7 @@ version: "3.9"
 # Service yang dijalankan:
 #   1. frontend  → React + Vite (build) → Nginx         (port 3000)
 #   2. upa-api   → PHP 8.2 + Apache + Ekstensi Redis    (port 8080)
-#   3. db-local  → MySQL 8 lokal (login/users)          (port 3307)
+#   3. db-local  → MySQL 8 lokal (login/users)          (port 3309)
 #   4. redis     → Redis 7 Cache Layer                  (port 6380)
 #
 # Database eksternal UNRI (172.16.9.8) diakses langsung dari

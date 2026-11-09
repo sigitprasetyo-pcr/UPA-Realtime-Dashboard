@@ -22,26 +22,28 @@ export function Header() {
   }[branch] || "bg-gray-100 text-gray-700 border-gray-200";
 
   return (
-    <header className="w-full px-5 py-2.5 bg-white border-b-2 border-unri-green-100 shadow-sm shrink-0">
-      <div className="w-full flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          {settings?.logoUrl ? (
-            <img src={settings.logoUrl} alt="Logo" className="h-10 object-contain" />
-          ) : (
-            <UnriLogo size="sm" />
-          )}
+    <header className="w-full px-3 sm:px-5 py-2 sm:py-2.5 bg-white border-b-2 border-unri-green-100 shadow-sm shrink-0">
+      <div className="w-full flex items-center justify-between gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="shrink-0 flex items-center justify-center">
+            {settings?.logoUrl ? (
+              <img src={settings.logoUrl} alt="Logo" className="h-8 sm:h-10 object-contain" />
+            ) : (
+              <UnriLogo size="sm" />
+            )}
+          </div>
           <div className="flex flex-col min-w-0">
-            <h1 className="text-xl md:text-2xl font-black text-unri-green-800 tracking-tight leading-tight whitespace-nowrap">
+            <h1 className="text-sm sm:text-lg md:text-2xl font-black text-unri-green-800 tracking-tight leading-tight truncate sm:whitespace-nowrap">
               PERPUSTAKAAN UNIVERSITAS RIAU
             </h1>
-            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-              <span className={`text-[12px] font-black px-2 py-0.5 rounded-md border ${branchBadgeColor}`}>
+            <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 flex-wrap">
+              <span className={`text-[10px] sm:text-[12px] font-black px-1.5 sm:px-2 py-0.5 rounded-md border ${branchBadgeColor}`}>
                 📍 {branchLabel}
               </span>
-              <span className="text-[12px] font-black text-unri-yellow-600 bg-unri-yellow-50 px-2 py-0.5 rounded-md border border-unri-yellow-100/50">
+              <span className="text-[10px] sm:text-[12px] font-black text-unri-yellow-600 bg-unri-yellow-50 px-1.5 sm:px-2 py-0.5 rounded-md border border-unri-yellow-100/50">
                 Layanan Buka
               </span>
-              <span className="text-xs font-bold text-gray-600">
+              <span className="hidden lg:inline text-xs font-bold text-gray-600">
                 {settings?.operationalHours || "Senin - Jumat | 08:00 - 16:00 WIB"}
               </span>
             </div>
@@ -49,23 +51,23 @@ export function Header() {
         </div>
 
         {/* RIGHT: Date + Clock */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <div className="text-right flex flex-col">
-            <span className="text-sm md:text-base font-extrabold text-unri-green-700 whitespace-nowrap">
+            <span className="text-xs sm:text-sm md:text-base font-extrabold text-unri-green-700 whitespace-nowrap">
               {dateString}
             </span>
             <div className="flex items-center gap-1.5 justify-end">
-              <span className="text-2xl md:text-3xl font-black text-unri-yellow-600 tabular-nums tracking-tight leading-none">
+              <span className="text-lg sm:text-2xl md:text-3xl font-black text-unri-yellow-600 tabular-nums tracking-tight leading-none">
                 {timeString}
               </span>
             </div>
-            <div className="flex items-center gap-1 justify-end mt-0.5 text-[11px] text-gray-600 font-bold">
+            <div className="hidden sm:flex items-center gap-1 justify-end mt-0.5 text-[10px] sm:text-[11px] text-gray-600 font-bold">
               <RefreshCw className="h-2.5 w-2.5 text-unri-green-600" />
               <span>Updated:</span>
               <span className="font-bold text-unri-green-700">{lastUpdateDisplay}</span>
             </div>
           </div>
-          <Clock className="h-7 w-7 text-unri-green-600 shrink-0" strokeWidth={2} />
+          <Clock className="hidden md:block h-6 w-6 md:h-7 md:w-7 text-unri-green-600 shrink-0" strokeWidth={2} />
         </div>
       </div>
     </header>

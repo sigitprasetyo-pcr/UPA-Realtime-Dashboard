@@ -19,12 +19,27 @@
 html,
 body,
 #root {
-  height: 100%;
   width: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden;
   background-color: #f8faf8;
+}
+
+@media (min-width: 768px) {
+  html,
+  body,
+  #root {
+    height: 100%;
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 767px) {
+  html,
+  body {
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 @layer components {
