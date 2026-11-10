@@ -41,13 +41,18 @@ try {
     $pdo = new PDO($dsn, $local_user, $local_pass, $options);
     $connected_db = "local ($local_host:$local_port / $local_db)";
 } catch (\PDOException $e) {
-    // Coba fallback nama database tanpa spasi (dashboard_realtime di Docker)
-    try {
-        $altDb = 'dashboard_realtime';
-        $dsnAlt = "mysql:host=$local_host;port=$local_port;dbname=$altDb;charset=$charset";
-        $pdo = new PDO($dsnAlt, $local_user, $local_pass, $options);
-        $connected_db = "local ($local_host:$local_port / $altDb)";
-    } catch (\PDOException $e2) {
+    // Coba fallback otomatis ke database slims9 atau lainnya jika Dashboard_UPA tidak ada
+    $fallbackDbs = ['slims9', 'slims', 'dashboard_realtime', 'Dashboard_UPA'];
+    foreach ($fallbackDbs as $altDb) {
+        try {
+            $dsnAlt = "mysql:host=$local_host;port=$local_port;dbname=$altDb;charset=$charset";
+            $pdo = new PDO($dsnAlt, $local_user, $local_pass, $options);
+            $connected_db = "local ($local_host:$local_port / $altDb)";
+            break;
+        } catch (\PDOException $eAlt) {}
+    }
+
+    if (!$pdo) {
         http_response_code(503);
         echo json_encode([
             "status"  => "error",
@@ -58,6 +63,10 @@ try {
     }
 }
 
+// ==========================================
+// KONEKSI DATABASE KEDUA (MANAJEMEN SKRIPSI) - DINONAKTIFKAN
+// Database tetap berada di XAMPP secara mandiri dan tidak dihubungkan ke dashboard/aplikasi
+// ==========================================
 $pdo_skripsi = null;
 $connected_skripsi = "offline";
 
@@ -160,12 +169,13 @@ switch ($action) {
             $dbMsg = $e->getMessage();
         }
         echo json_encode([
-            "status"       => $dbOk ? "online" : "db_error",
-            "db"           => $dbOk ? "connected" : "error",
-            "connected_to" => $connected_db,
-            "message"      => $dbMsg,
-            "timestamp"    => date('c'),
-        ]);
+            "status"             => $dbOk ? "online" : "db_error",
+            "db"                 => $dbOk ? "connected" : "error",
+            "database_1_slims"   => $connected_db,
+            "database_2_skripsi" => $connected_skripsi,
+            "message"            => $dbMsg,
+            "timestamp"          => date('c'),
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         break;
 
     case 'test':
