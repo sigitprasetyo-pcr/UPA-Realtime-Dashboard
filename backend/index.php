@@ -66,17 +66,21 @@ try {
 // ==========================================
 // KONEKSI DATABASE KEDUA: MANAJEMEN SKRIPSI (STRICT READ-ONLY)
 // ==========================================
-$skripsi_db = getenv('DB_SKRIPSI_NAME') ?: 'manajemen skripsi';
+$skripsi_host = getenv('DB_SKRIPSI_HOST') ?: $local_host;
+$skripsi_port = (int)(getenv('DB_SKRIPSI_PORT') ?: 3308);
+$skripsi_user = getenv('DB_SKRIPSI_USER') ?: $local_user;
+$skripsi_pass = getenv('DB_SKRIPSI_PASS') ?: $local_pass;
+$skripsi_db   = getenv('DB_SKRIPSI_NAME') ?: 'manajemen_skripsi';
 try {
-    $dsn_skripsi = "mysql:host=$local_host;port=$local_port;dbname=$skripsi_db;charset=$charset";
-    $pdo_skripsi = new PDO($dsn_skripsi, $local_user, $local_pass, $options);
-    $connected_skripsi = "local ($local_host:$local_port / $skripsi_db)";
+    $dsn_skripsi = "mysql:host=$skripsi_host;port=$skripsi_port;dbname=$skripsi_db;charset=$charset";
+    $pdo_skripsi = new PDO($dsn_skripsi, $skripsi_user, $skripsi_pass, $options);
+    $connected_skripsi = "local ($skripsi_host:$skripsi_port / $skripsi_db)";
 } catch (\PDOException $e) {
     try {
-        // Fallback jika nama database menggunakan underscore (manajemen_skripsi)
-        $dsn_skripsi = "mysql:host=$local_host;port=$local_port;dbname=manajemen_skripsi;charset=$charset";
-        $pdo_skripsi = new PDO($dsn_skripsi, $local_user, $local_pass, $options);
-        $connected_skripsi = "local ($local_host:$local_port / manajemen_skripsi)";
+        // Fallback jika nama database menggunakan spasi (manajemen skripsi)
+        $dsn_skripsi = "mysql:host=$skripsi_host;port=$skripsi_port;dbname=manajemen skripsi;charset=$charset";
+        $pdo_skripsi = new PDO($dsn_skripsi, $skripsi_user, $skripsi_pass, $options);
+        $connected_skripsi = "local ($skripsi_host:$skripsi_port / manajemen skripsi)";
     } catch (\PDOException $e2) {
         $pdo_skripsi = null;
         $connected_skripsi = "offline: " . $e2->getMessage();

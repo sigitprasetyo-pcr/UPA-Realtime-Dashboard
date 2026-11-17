@@ -50,17 +50,24 @@ services:
         condition: service_healthy
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    env_file:
+      - .env.docker
     environment:
       # ── Redis ───────────────────────────────────
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      # ── DB Lokal (SLiMS di XAMPP / MySQL) ───────
+      # ── Server A: SLiMS (port 3307) ─────────────
       DB_LOCAL_HOST: ${DB_LOCAL_HOST:-host.docker.internal}
-      DB_LOCAL_PORT: ${DB_LOCAL_PORT:-3306}
+      DB_LOCAL_PORT: ${DB_LOCAL_PORT:-3307}
       DB_LOCAL_USER: ${DB_LOCAL_USER:-root}
-      DB_LOCAL_PASS: ${DB_LOCAL_PASS:-}
+      DB_LOCAL_PASS: ${DB_LOCAL_PASS:-rootpassword}
       DB_LOCAL_NAME: ${DB_LOCAL_NAME:-slims9}
-      DB_SKRIPSI_NAME: ${DB_SKRIPSI_NAME:-manajemen skripsi}
+      # ── Server B: Manajemen Skripsi (port 3308) ──
+      DB_SKRIPSI_HOST: ${DB_SKRIPSI_HOST:-host.docker.internal}
+      DB_SKRIPSI_PORT: ${DB_SKRIPSI_PORT:-3308}
+      DB_SKRIPSI_USER: ${DB_SKRIPSI_USER:-root}
+      DB_SKRIPSI_PASS: ${DB_SKRIPSI_PASS:-rootpassword}
+      DB_SKRIPSI_NAME: ${DB_SKRIPSI_NAME:-manajemen_skripsi}
     volumes:
       - ./backend:/var/www/html
       - api-cache:/var/www/html/cache
