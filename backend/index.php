@@ -19,7 +19,7 @@ if ($method === 'OPTIONS') {
 // ==========================================
 $local_host = getenv('DB_LOCAL_HOST') ?: '127.0.0.1';
 $local_port = (int)(getenv('DB_LOCAL_PORT') ?: 3306);
-$local_db   = getenv('DB_LOCAL_NAME') ?: 'Dashboard_UPA';
+$local_db   = getenv('DB_LOCAL_NAME') ?: 'slims9';
 $local_user = getenv('DB_LOCAL_USER') ?: 'root';
 $local_pass = getenv('DB_LOCAL_PASS') ?: '';
 
@@ -42,7 +42,7 @@ try {
     $connected_db = "local ($local_host:$local_port / $local_db)";
 } catch (\PDOException $e) {
     // Coba fallback otomatis ke database slims9 atau lainnya jika Dashboard_UPA tidak ada
-    $fallbackDbs = ['slims9', 'slims', 'dashboard_realtime', 'Dashboard_UPA'];
+    $fallbackDbs = ['slims9', 'slims', 'Dashboard_UPA', 'dashboard_realtime'];
     foreach ($fallbackDbs as $altDb) {
         try {
             $dsnAlt = "mysql:host=$local_host;port=$local_port;dbname=$altDb;charset=$charset";
@@ -64,11 +64,24 @@ try {
 }
 
 // ==========================================
-// KONEKSI DATABASE KEDUA (MANAJEMEN SKRIPSI) - DINONAKTIFKAN
-// Database tetap berada di XAMPP secara mandiri dan tidak dihubungkan ke dashboard/aplikasi
+// KONEKSI DATABASE KEDUA: MANAJEMEN SKRIPSI (STRICT READ-ONLY)
 // ==========================================
-$pdo_skripsi = null;
-$connected_skripsi = "offline";
+$skripsi_db = getenv('DB_SKRIPSI_NAME') ?: 'manajemen skripsi';
+try {
+    $dsn_skripsi = "mysql:host=$local_host;port=$local_port;dbname=$skripsi_db;charset=$charset";
+    $pdo_skripsi = new PDO($dsn_skripsi, $local_user, $local_pass, $options);
+    $connected_skripsi = "local ($local_host:$local_port / $skripsi_db)";
+} catch (\PDOException $e) {
+    try {
+        // Fallback jika nama database menggunakan underscore (manajemen_skripsi)
+        $dsn_skripsi = "mysql:host=$local_host;port=$local_port;dbname=manajemen_skripsi;charset=$charset";
+        $pdo_skripsi = new PDO($dsn_skripsi, $local_user, $local_pass, $options);
+        $connected_skripsi = "local ($local_host:$local_port / manajemen_skripsi)";
+    } catch (\PDOException $e2) {
+        $pdo_skripsi = null;
+        $connected_skripsi = "offline: " . $e2->getMessage();
+    }
+}
 
 // Helper untuk koneksi & inisialisasi tabel users di database lokal (Docker/XAMPP)
 function getLocalXamppPDO() {

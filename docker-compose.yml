@@ -59,7 +59,8 @@ services:
       DB_LOCAL_PORT: ${DB_LOCAL_PORT:-3306}
       DB_LOCAL_USER: ${DB_LOCAL_USER:-root}
       DB_LOCAL_PASS: ${DB_LOCAL_PASS:-}
-      DB_LOCAL_NAME: ${DB_LOCAL_NAME:-Dashboard_UPA}
+      DB_LOCAL_NAME: ${DB_LOCAL_NAME:-slims9}
+      DB_SKRIPSI_NAME: ${DB_SKRIPSI_NAME:-manajemen skripsi}
     volumes:
       - ./backend:/var/www/html
       - api-cache:/var/www/html/cache
