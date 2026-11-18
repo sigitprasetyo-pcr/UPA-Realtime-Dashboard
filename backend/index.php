@@ -87,38 +87,21 @@ try {
     }
 }
 
-// Helper untuk koneksi & inisialisasi tabel users di database lokal (Docker/XAMPP)
+// Helper untuk koneksi & inisialisasi tabel users di database lokal (Docker db-local)
 function getLocalXamppPDO() {
-    $host = getenv('DB_LOCAL_HOST') ?: '127.0.0.1';
-    $port = (int)(getenv('DB_LOCAL_PORT') ?: 3306);
-    $user = getenv('DB_LOCAL_USER') ?: 'root';
-    $pass = getenv('DB_LOCAL_PASS') ?: '';
+    // Prioritas: DB_LOGIN_HOST (db-local container) → fallback 127.0.0.1
+    $host   = getenv('DB_LOGIN_HOST') ?: '127.0.0.1';
+    $port   = (int)(getenv('DB_LOGIN_PORT') ?: 3306);
+    $user   = getenv('DB_LOGIN_USER') ?: 'root';
+    $pass   = getenv('DB_LOGIN_PASS') ?: '';
+    $dbName = getenv('DB_LOGIN_NAME') ?: 'dashboard_realtime';
 
     try {
-        $p = new PDO("mysql:host=$host;port=$port;charset=utf8mb4", $user, $pass, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        $p = new PDO("mysql:host=$host;port=$port;dbname=$dbName;charset=utf8mb4", $user, $pass, [
+            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_TIMEOUT => 3,
+            PDO::ATTR_TIMEOUT            => 5,
         ]);
-
-        // Cek database yang ada di XAMPP phpMyAdmin
-        $dbs = $p->query("SHOW DATABASES")->fetchAll(PDO::FETCH_COLUMN);
-
-        $targetDb = null;
-        if (in_array('Dashboard_UPA', $dbs)) {
-            $targetDb = '`Dashboard_UPA`';
-        } elseif (in_array('dashoard real time', $dbs)) {
-            $targetDb = '`dashoard real time`';
-        } elseif (in_array('dashboard_realtime', $dbs)) {
-            $targetDb = '`dashboard_realtime`';
-        } elseif (in_array('upa_perpustakaan', $dbs)) {
-            $targetDb = '`upa_perpustakaan`';
-        } else {
-            $p->exec("CREATE DATABASE IF NOT EXISTS `Dashboard_UPA` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-            $targetDb = '`Dashboard_UPA`';
-        }
-
-        $p->exec("USE $targetDb");
 
         // Buat tabel users jika belum ada
         $p->exec("

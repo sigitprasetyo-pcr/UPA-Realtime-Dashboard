@@ -2,17 +2,18 @@ version: "3.9"
 
 # ================================================================
 # UPA Realtime Dashboard - Docker Compose
+# Deploy Server: 172.16.9.6:1035
+# Database UNRI: 172.16.9.8 (SLiMS:24002, Skripsi:23601)
 # ================================================================
 #
 # Service yang dijalankan:
-#   1. frontend  → React + Vite (build) → Nginx         (port 3000)
+#   1. frontend  → React + Vite (build) → Nginx         (port 1035)
 #   2. upa-api   → PHP 8.2 + Apache + Ekstensi Redis    (port 8080)
 #   3. db-local  → MySQL 8 lokal (login/users)          (port 3309)
 #   4. redis     → Redis 7 Cache Layer                  (port 6380)
 #
 # Database eksternal UNRI (172.16.9.8) diakses langsung dari
-# container upa-api — pastikan jaringan host mengizinkan akses
-# ke IP tersebut (port 24002 & 23601).
+# container upa-api melalui IP statis.
 # ================================================================
 
 services:
@@ -26,7 +27,7 @@ services:
       dockerfile: Dockerfile.frontend
     container_name: upa-frontend
     ports:
-      - "3000:80"
+      - "1035:80"
     depends_on:
       - upa-api
     networks:
@@ -48,29 +49,32 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      db-local:
+        condition: service_healthy
     env_file:
       - .env.docker
     environment:
       # ── Redis ───────────────────────────────────
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      # ── Server A: SLiMS (port 3307) ─────────────
-      DB_LOCAL_HOST: ${DB_LOCAL_HOST:-host.docker.internal}
-      DB_LOCAL_PORT: ${DB_LOCAL_PORT:-3307}
+      # ── Database Lokal (login/users) ─────────────
+      DB_LOGIN_HOST: db-local
+      DB_LOGIN_PORT: 3306
+      DB_LOGIN_USER: root
+      DB_LOGIN_PASS: upa_secret_2024
+      DB_LOGIN_NAME: dashboard_realtime
+      # ── Server A: SLiMS (172.16.9.8:24002) ──────
+      DB_LOCAL_HOST: ${DB_LOCAL_HOST:-172.16.9.8}
+      DB_LOCAL_PORT: ${DB_LOCAL_PORT:-24002}
       DB_LOCAL_USER: ${DB_LOCAL_USER:-root}
       DB_LOCAL_PASS: ${DB_LOCAL_PASS:-rootpassword}
       DB_LOCAL_NAME: ${DB_LOCAL_NAME:-slims9}
-      # ── Server B: Manajemen Skripsi (port 3308) ──
-      DB_SKRIPSI_HOST: ${DB_SKRIPSI_HOST:-host.docker.internal}
-      DB_SKRIPSI_PORT: ${DB_SKRIPSI_PORT:-3308}
+      # ── Server B: Manajemen Skripsi (172.16.9.8:23601) ──
+      DB_SKRIPSI_HOST: ${DB_SKRIPSI_HOST:-172.16.9.8}
+      DB_SKRIPSI_PORT: ${DB_SKRIPSI_PORT:-23601}
       DB_SKRIPSI_USER: ${DB_SKRIPSI_USER:-root}
       DB_SKRIPSI_PASS: ${DB_SKRIPSI_PASS:-rootpassword}
       DB_SKRIPSI_NAME: ${DB_SKRIPSI_NAME:-manajemen_skripsi}
-    volumes:
-      - ./backend:/var/www/html
-      - api-cache:/var/www/html/cache
     networks:
       - upa-network
     restart: unless-stopped
@@ -86,7 +90,7 @@ services:
     ports:
       - "3309:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_LOCAL_PASS:-upa_secret_2024}
+      MYSQL_ROOT_PASSWORD: upa_secret_2024
       MYSQL_DATABASE: dashboard_realtime
       MYSQL_CHARACTER_SET_SERVER: utf8mb4
       MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
